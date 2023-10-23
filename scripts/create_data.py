@@ -84,5 +84,5 @@ if __name__ == "__main__":
 
     print(f'Mean of log10(den) across the training set: {mean}')
     print(f'Std. dev of log10(den) across the training set: {std}')
-    print(f'Min values of parameters: {min_vals}')
-    print(f'Max values of parameters: {max_vals}')
+    print(f'Min values of parameters across the training set: {min_vals}')
+    print(f'Max values of parameters across the training set: {max_vals}')
