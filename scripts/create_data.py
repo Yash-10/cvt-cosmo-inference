@@ -68,12 +68,12 @@ if __name__ == "__main__":
         cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
 
         if i in train_sim_numbers:
-            filename = os.path.join('train', f'sim{i}_LH_z0_grid64_masCIC.h5')
+            filename = os.path.join('train', f'processed_sim{i}_LH_z0_grid64_masCIC.h5')
         elif i in test_sim_numbers:
-            filename = os.path.join('test', f'sim{i}_LH_z0_grid64_masCIC.h5')
+            filename = os.path.join('test', f'processed_sim{i}_LH_z0_grid64_masCIC.h5')
         elif val:
             if i in val_sim_numbers:
-                filename = os.path.join('val', f'sim{i}_LH_z0_grid64_masCIC.h5')
+                filename = os.path.join('val', f'processed_sim{i}_LH_z0_grid64_masCIC.h5')
 
         h5f = h5py.File(filename, 'w')
         dataset = h5f.create_dataset('3D_density_field', data=density, compression='gzip')
