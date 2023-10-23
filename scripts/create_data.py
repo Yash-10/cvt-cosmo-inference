@@ -27,7 +27,7 @@ if __name__ == "__main__":
     cosmo_arr = []
     for i in range(opt.num_sims):
         density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'))
-        den_arr.append(density)
+        den_arr.append(np.log10(density))
         cosmo_arr.append(cosmo_params)
 
     mean, std = np.mean(density), np.std(density)
