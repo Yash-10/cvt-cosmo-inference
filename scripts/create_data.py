@@ -45,11 +45,11 @@ if __name__ == "__main__":
     end = round(opt.train_frac*opt.num_sims)
     train_sim_numbers = sim_numbers[:end]
     end2 = round(opt.test_frac*opt.num_sims)
-    test_sim_numbers = sim_numbers[end:end2]
+    test_sim_numbers = sim_numbers[end:end+end2]
 
     val = opt.train_frac + opt.test_frac != 1.0
     if val:  # It means validation set must also be saved.
-        val_sim_numbers = sim_numbers[end2:]
+        val_sim_numbers = sim_numbers[end+end2:]
 
     if os.path.exists('train'):
         shutil.rmtree('train')
