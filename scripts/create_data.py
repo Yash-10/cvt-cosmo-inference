@@ -30,7 +30,7 @@ if __name__ == "__main__":
         den_arr.append(np.log10(density))
         cosmo_arr.append(cosmo_params)
 
-    mean, std = np.mean(density), np.std(density)
+    mean, std = np.mean(den_arr), np.std(den_arr)
     del den_arr
 
     cosmo_arr = np.array(cosmo_arr)
