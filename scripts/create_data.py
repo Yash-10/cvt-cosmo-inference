@@ -2,6 +2,7 @@ import os
 import h5py
 import numpy as np
 import argparse
+import shutil
 
 from utils import print_options, preprocess_a_map, read_hdf5, normalize_cosmo_param
 
@@ -49,6 +50,13 @@ if __name__ == "__main__":
     val = opt.train_frac + opt.test_frac != 1.0
     if val:  # It means validation set must also be saved.
         val_sim_numbers = sim_numbers[end2:]
+
+    if os.path.exists('train'):
+        shutil.rmtree('train')
+    if os.path.exists('test'):
+        shutil.rmtree('test')
+    if os.path.exists('val'):
+        shutil.rmtree('val')
 
     for i in range(opt.num_sims):
         density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'))
