@@ -33,8 +33,8 @@ if __name__ == "__main__":
     del den_arr
 
     cosmo_arr = np.array(cosmo_arr)
-    min_vals = np.array([cosmo_arr[:, i].min() for i in range(6)])  # 6 parameters.
-    max_vals = np.array([cosmo_arr[:, i].max() for i in range(6)])  # 6 parameters.
+    min_vals = np.array([cosmo_arr[:, i].min() for i in range(5)])  # 5 parameters.
+    max_vals = np.array([cosmo_arr[:, i].max() for i in range(5)])  # 5 parameters.
 
     # Decide splits for train, test, and val
     np.random.seed(opt.seed)
