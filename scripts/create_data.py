@@ -23,20 +23,6 @@ if __name__ == "__main__":
     # Print options
     print_options(opt)
 
-    den_arr = []
-    cosmo_arr = []
-    for i in range(opt.num_sims):
-        density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'))
-        den_arr.append(np.log10(density))
-        cosmo_arr.append(cosmo_params)
-
-    mean, std = np.mean(den_arr), np.std(den_arr)
-    del den_arr
-
-    cosmo_arr = np.array(cosmo_arr)
-    min_vals = np.array([cosmo_arr[:, i].min() for i in range(5)])  # 5 parameters.
-    max_vals = np.array([cosmo_arr[:, i].max() for i in range(5)])  # 5 parameters.
-
     # Decide splits for train, test, and val
     np.random.seed(opt.seed)
     sim_numbers = np.arange(opt.num_sims)
@@ -62,6 +48,22 @@ if __name__ == "__main__":
     os.mkdir('train')
     os.mkdir('val')
 
+    # Calculate statistics across training set for normalization.
+    den_arr = []
+    cosmo_arr = []
+    for i in range(opt.num_sims):
+        if i in train_sim_numbers:  # We want to calculate statistics only using the training set.
+            density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'))
+            den_arr.append(np.log10(density))
+            cosmo_arr.append(cosmo_params)
+
+    mean, std = np.mean(den_arr), np.std(den_arr)
+    del den_arr
+
+    cosmo_arr = np.array(cosmo_arr)
+    min_vals = np.array([cosmo_arr[:, i].min() for i in range(5)])  # 5 parameters.
+    max_vals = np.array([cosmo_arr[:, i].max() for i in range(5)])  # 5 parameters.
+
     for i in range(opt.num_sims):
         density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'))
         density = preprocess_a_map(density, mean=mean, std=std)
@@ -79,3 +81,8 @@ if __name__ == "__main__":
         dataset = h5f.create_dataset('3D_density_field', data=density, compression='gzip')
         dataset.attrs['cosmo_params'] = cosmo_params  # Order of storing parameters is same as Cosmo_params.dat
         h5f.close()
+
+    print(f'Mean of log10(den) across the training set: {mean}')
+    print(f'Std. dev of log10(den) across the training set: {std}')
+    print(f'Min values of parameters: {min_vals}')
+    print(f'Max values of parameters: {max_vals}')
