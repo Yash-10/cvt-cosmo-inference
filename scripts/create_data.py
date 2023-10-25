@@ -37,6 +37,11 @@ if __name__ == "__main__":
     if val:  # It means validation set must also be saved.
         val_sim_numbers = sim_numbers[end+end2:]
 
+    assert set(train_sim_numbers).isdisjoint(test_sim_numbers)
+    if val:
+        assert set(test_sim_numbers).isdisjoint(val_sim_numbers)
+        assert set(train_sim_numbers).isdisjoint(val_sim_numbers)
+
     if os.path.exists('train'):
         shutil.rmtree('train')
     if os.path.exists('test'):
