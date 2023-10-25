@@ -85,33 +85,33 @@ if __name__ == "__main__":
         assert density.shape[0] == density.shape[1]
         assert density.shape[0] == density.shape[2]
 
-        for i in range(density.shape[0]):
+        for j in range(density.shape[0]):
             if i in train_sim_numbers:
-                filename1 = os.path.join('train', f'processed_sim{i}_X{i}_LH_z0_grid64_masCIC.npy.gz')
-                filename2 = os.path.join('train', f'processed_sim{i}_Y{i}_LH_z0_grid64_masCIC.npy.gz')
-                filename3 = os.path.join('train', f'processed_sim{i}_Z{i}_LH_z0_grid64_masCIC.npy.gz')
+                filename1 = os.path.join('train', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
+                filename2 = os.path.join('train', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
+                filename3 = os.path.join('train', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
             elif i in test_sim_numbers:
-                filename1 = os.path.join('test', f'processed_sim{i}_X{i}_LH_z0_grid64_masCIC.npy.gz')
-                filename2 = os.path.join('test', f'processed_sim{i}_Y{i}_LH_z0_grid64_masCIC.npy.gz')
-                filename3 = os.path.join('test', f'processed_sim{i}_Z{i}_LH_z0_grid64_masCIC.npy.gz')
+                filename1 = os.path.join('test', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
+                filename2 = os.path.join('test', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
+                filename3 = os.path.join('test', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
             elif val:
                 if i in val_sim_numbers:
-                    filename1 = os.path.join('val', f'processed_sim{i}_X{i}_LH_z0_grid64_masCIC.npy.gz')
-                    filename2 = os.path.join('val', f'processed_sim{i}_Y{i}_LH_z0_grid64_masCIC.npy.gz')
-                    filename3 = os.path.join('val', f'processed_sim{i}_Z{i}_LH_z0_grid64_masCIC.npy.gz')
+                    filename1 = os.path.join('val', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
+                    filename2 = os.path.join('val', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
+                    filename3 = os.path.join('val', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
 
             f = gzip.GzipFile(filename1, 'w')
-            np.save(file=f, arr=density[i, :, :])
+            np.save(file=f, arr=density[j, :, :])
             f.close()
             del f
 
             f = gzip.GzipFile(filename2, 'w')
-            np.save(file=f, arr=density[:, i, :])
+            np.save(file=f, arr=density[:, j, :])
             f.close()
             del f
 
             f = gzip.GzipFile(filename3, 'w')
-            np.save(file=f, arr=density[:, :, i])
+            np.save(file=f, arr=density[:, :, j])
             f.close()
             del f
 
