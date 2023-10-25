@@ -1,5 +1,6 @@
 import os
 import h5py
+import pandas as pd
 import numpy as np
 import argparse
 import shutil
@@ -94,12 +95,20 @@ if __name__ == "__main__":
     if os.path.exists(val_orig_param_file):
         os.remove(val_orig_param_file)
 
-    tr = open(train_param_file, 'a')
-    tro = open(train_orig_param_file, 'a')
-    te = open(train_param_file, 'a')
-    teo = open(test_orig_param_file, 'a')
-    va = open(train_param_file, 'a')
-    vao = open(val_orig_param_file, 'a')
+    # tr = open(train_param_file, 'a')
+    # tro = open(train_orig_param_file, 'a')
+    # te = open(train_param_file, 'a')
+    # teo = open(test_orig_param_file, 'a')
+    # va = open(train_param_file, 'a')
+    # vao = open(val_orig_param_file, 'a')
+
+    train_param_data = []
+    test_param_data = []
+    orig_train_param_data = []
+    orig_test_param_data = []
+    if val:
+        val_param_data = []
+        orig_val_param_data = []
 
     for i in range(opt.num_sims):
         density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'), dtype=dtype)
@@ -119,23 +128,32 @@ if __name__ == "__main__":
                 filename2 = os.path.join('train', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
                 filename3 = os.path.join('train', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
                 for fn in [filename1, filename2, filename3]:
-                    tr.write([fn, normalized_cosmo_params])
-                    tro.write([fn, cosmo_params])
+                    train_param_data.append([fn, normalized_cosmo_params])
+                    orig_train_param_data.append([fn, cosmo_params])
+                # for fn in [filename1, filename2, filename3]:
+                #     tr.write([fn, normalized_cosmo_params])
+                #     tro.write([fn, cosmo_params])
             elif i in test_sim_numbers:
                 filename1 = os.path.join('test', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
                 filename2 = os.path.join('test', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
                 filename3 = os.path.join('test', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
                 for fn in [filename1, filename2, filename3]:
-                    te.write([fn, normalized_cosmo_params])
-                    teo.write([fn, cosmo_params])
+                    test_param_data.append([fn, normalized_cosmo_params])
+                    orig_test_param_data.append([fn, cosmo_params])
+                # for fn in [filename1, filename2, filename3]:
+                #     te.write([fn, normalized_cosmo_params])
+                #     teo.write([fn, cosmo_params])
             elif val:
                 if i in val_sim_numbers:
                     filename1 = os.path.join('val', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
                     filename2 = os.path.join('val', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
                     filename3 = os.path.join('val', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
                     for fn in [filename1, filename2, filename3]:
-                        va.write([fn, normalized_cosmo_params])
-                        vao.write([fn, cosmo_params])
+                        val_param_data.append([fn, normalized_cosmo_params])
+                        orig_val_param_data.append([fn, cosmo_params])
+                    # for fn in [filename1, filename2, filename3]:
+                    #     va.write([fn, normalized_cosmo_params])
+                    #     vao.write([fn, cosmo_params])
 
             f = gzip.GzipFile(filename1, 'w')
             np.save(file=f, arr=density[j, :, :])
@@ -151,6 +169,22 @@ if __name__ == "__main__":
             np.save(file=f, arr=density[:, :, j])
             f.close()
             del f
+    
+    train_param_data = pd.DataFrame(train_param_data)
+    orig_train_param_data = pd.DataFrame(orig_train_param_data)
+    test_param_data = pd.DataFrame(test_param_data)
+    orig_test_param_data = pd.DataFrame(orig_test_param_data)
+    if val:
+        val_param_data = pd.DataFrame(val_param_data)
+        orig_val_param_data = pd.DataFrame(orig_val_param_data)
+
+    train_param_data.to_csv(os.path.join('train', 'train_normalized_params.csv'))
+    orig_train_param_data.to_csv(os.path.join('train', 'train_original_params.csv'))
+    test_param_data.to_csv(os.path.join('test', 'test_normalized_params.csv'))
+    orig_test_param_data.to_csv(os.path.join('test', 'test_original_params.csv'))
+    if val:
+        val_param_data.to_csv(os.path.join('val', 'val_normalized_params.csv'))
+        orig_val_param_data.to_csv(os.path.join('val', 'val_original_params.csv'))
 
     print(f'Mean of log10(den) across the training set: {mean}')
     print(f'Std. dev of log10(den) across the training set: {std}')
