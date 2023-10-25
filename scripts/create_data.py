@@ -76,14 +76,26 @@ if __name__ == "__main__":
     for i in range(opt.num_sims):
         density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'), dtype=dtype)
         density = preprocess_a_map(density, mean=mean, std=std)
-        cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
+        normalized_cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
 
         assert cosmo_params.min() >= -1 and cosmo_params.max() <= 1  # Due to the normalization.
-        
+
         # Now extract 2D maps from the 3D field
         # Assert it's a cube.
         assert density.shape[0] == density.shape[1]
         assert density.shape[0] == density.shape[2]
+
+        # Create parameter file name
+        if i in train_sim_numbers:
+            param_file = os.path.join('train', 'normalized_cosmo_params_train.txt')
+            orig_param_file = os.path.join('train', 'orig_cosmo_params_train.txt')
+        elif i in test_sim_numbers:
+            param_file = os.path.join('test', 'normalized_cosmo_params_test.txt')
+            orig_param_file = os.path.join('test', 'orig_cosmo_params_test.txt')
+        elif val:
+            if i in val_sim_numbers:
+                param_file = os.path.join('val', 'normalized_cosmo_params_val.txt')
+                orig_param_file = os.path.join('val', 'orig_cosmo_params_val.txt')
 
         for j in range(density.shape[0]):
             if i in train_sim_numbers:
@@ -104,16 +116,22 @@ if __name__ == "__main__":
             np.save(file=f, arr=density[j, :, :])
             f.close()
             del f
+            np.savetxt(param_file, np.hstack(filename1, normalized_cosmo_params))
+            np.savetxt(orig_param_file, np.hstack(filename1, cosmo_params))
 
             f = gzip.GzipFile(filename2, 'w')
             np.save(file=f, arr=density[:, j, :])
             f.close()
             del f
+            np.savetxt(param_file, np.hstack(filename2, normalized_cosmo_params))
+            np.savetxt(orig_param_file, np.hstack(filename2, cosmo_params))
 
             f = gzip.GzipFile(filename3, 'w')
             np.save(file=f, arr=density[:, :, j])
             f.close()
             del f
+            np.savetxt(param_file, np.hstack(filename3, normalized_cosmo_params))
+            np.savetxt(orig_param_file, np.hstack(filename3, cosmo_params))
 
     print(f'Mean of log10(den) across the training set: {mean}')
     print(f'Std. dev of log10(den) across the training set: {std}')
