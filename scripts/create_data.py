@@ -73,65 +73,84 @@ if __name__ == "__main__":
     min_vals = np.array([cosmo_arr[:, i].min() for i in range(5)])  # 5 parameters.
     max_vals = np.array([cosmo_arr[:, i].max() for i in range(5)])  # 5 parameters.
 
+    train_param_file = os.path.join('train', 'train_normalized_cosmo_params_train.txt')
+    train_orig_param_file = os.path.join('train', 'train_orig_cosmo_params_train.txt')
+    test_param_file = os.path.join('test', 'test_normalized_cosmo_params_train.txt')
+    test_orig_param_file = os.path.join('test', 'test_orig_cosmo_params_train.txt')
+    if val:
+        val_param_file = os.path.join('val', 'val_normalized_cosmo_params_train.txt')
+        val_orig_param_file = os.path.join('val', 'val_orig_cosmo_params_train.txt')
+
+    if os.path.exists(train_param_file):
+        os.remove(train_param_file)
+    if os.path.exists(train_orig_param_file):
+        os.remove(train_orig_param_file)
+    if os.path.exists(test_param_file):
+        os.remove(test_param_file)
+    if os.path.exists(test_orig_param_file):
+        os.remove(test_orig_param_file)
+    if os.path.exists(val_param_file):
+        os.remove(val_param_file)
+    if os.path.exists(val_orig_param_file):
+        os.remove(val_orig_param_file)
+
+    tr = open(train_param_file, 'a')
+    tro = open(train_orig_param_file, 'a')
+    te = open(train_param_file, 'a')
+    teo = open(test_orig_param_file, 'a')
+    va = open(train_param_file, 'a')
+    vao = open(val_orig_param_file, 'a')
+
     for i in range(opt.num_sims):
         density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'), dtype=dtype)
         density = preprocess_a_map(density, mean=mean, std=std)
         normalized_cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
 
-        assert cosmo_params.min() >= -1 and cosmo_params.max() <= 1  # Due to the normalization.
+        assert normalized_cosmo_params.min() >= -1 and normalized_cosmo_params.max() <= 1  # Due to the normalization.
 
         # Now extract 2D maps from the 3D field
         # Assert it's a cube.
         assert density.shape[0] == density.shape[1]
         assert density.shape[0] == density.shape[2]
 
-        # Create parameter file name
-        if i in train_sim_numbers:
-            param_file = os.path.join('train', 'normalized_cosmo_params_train.txt')
-            orig_param_file = os.path.join('train', 'orig_cosmo_params_train.txt')
-        elif i in test_sim_numbers:
-            param_file = os.path.join('test', 'normalized_cosmo_params_test.txt')
-            orig_param_file = os.path.join('test', 'orig_cosmo_params_test.txt')
-        elif val:
-            if i in val_sim_numbers:
-                param_file = os.path.join('val', 'normalized_cosmo_params_val.txt')
-                orig_param_file = os.path.join('val', 'orig_cosmo_params_val.txt')
-
         for j in range(density.shape[0]):
             if i in train_sim_numbers:
                 filename1 = os.path.join('train', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
                 filename2 = os.path.join('train', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
                 filename3 = os.path.join('train', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
+                for fn in [filename1, filename2, filename3]:
+                    tr.write([fn, normalized_cosmo_params])
+                    tro.write([fn, cosmo_params])
             elif i in test_sim_numbers:
                 filename1 = os.path.join('test', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
                 filename2 = os.path.join('test', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
                 filename3 = os.path.join('test', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
+                for fn in [filename1, filename2, filename3]:
+                    te.write([fn, normalized_cosmo_params])
+                    teo.write([fn, cosmo_params])
             elif val:
                 if i in val_sim_numbers:
                     filename1 = os.path.join('val', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
                     filename2 = os.path.join('val', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
                     filename3 = os.path.join('val', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
+                    for fn in [filename1, filename2, filename3]:
+                        va.write([fn, normalized_cosmo_params])
+                        vao.write([fn, cosmo_params])
 
             f = gzip.GzipFile(filename1, 'w')
             np.save(file=f, arr=density[j, :, :])
             f.close()
             del f
-            np.savetxt(param_file, [filename1, normalized_cosmo_params])
-            np.savetxt(orig_param_file, [filename1, cosmo_params])
 
             f = gzip.GzipFile(filename2, 'w')
             np.save(file=f, arr=density[:, j, :])
             f.close()
             del f
-            np.savetxt(param_file, [filename2, normalized_cosmo_params])
-            np.savetxt(orig_param_file, [filename2, cosmo_params])
 
             f = gzip.GzipFile(filename3, 'w')
             np.save(file=f, arr=density[:, :, j])
             f.close()
             del f
-            np.savetxt(param_file, [filename3, normalized_cosmo_params])
-            np.savetxt(orig_param_file, [filename3, cosmo_params])
 
     print(f'Mean of log10(den) across the training set: {mean}')
     print(f'Std. dev of log10(den) across the training set: {std}')
