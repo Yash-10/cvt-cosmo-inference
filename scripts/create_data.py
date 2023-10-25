@@ -128,8 +128,8 @@ if __name__ == "__main__":
                 filename2 = os.path.join('train', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
                 filename3 = os.path.join('train', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
                 for fn in [filename1, filename2, filename3]:
-                    train_param_data.append([fn, normalized_cosmo_params])
-                    orig_train_param_data.append([fn, cosmo_params])
+                    train_param_data.append(np.insert(normalized_cosmo_params, 0, fn))
+                    orig_train_param_data.append(np.insert(cosmo_params, 0, fn))
                 # for fn in [filename1, filename2, filename3]:
                 #     tr.write([fn, normalized_cosmo_params])
                 #     tro.write([fn, cosmo_params])
@@ -138,8 +138,8 @@ if __name__ == "__main__":
                 filename2 = os.path.join('test', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
                 filename3 = os.path.join('test', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
                 for fn in [filename1, filename2, filename3]:
-                    test_param_data.append([fn, normalized_cosmo_params])
-                    orig_test_param_data.append([fn, cosmo_params])
+                    test_param_data.append(np.insert(normalized_cosmo_params, 0, fn))
+                    orig_test_param_data.append(np.insert(cosmo_params, 0, fn))
                 # for fn in [filename1, filename2, filename3]:
                 #     te.write([fn, normalized_cosmo_params])
                 #     teo.write([fn, cosmo_params])
@@ -149,8 +149,8 @@ if __name__ == "__main__":
                     filename2 = os.path.join('val', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
                     filename3 = os.path.join('val', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
                     for fn in [filename1, filename2, filename3]:
-                        val_param_data.append([fn, normalized_cosmo_params])
-                        orig_val_param_data.append([fn, cosmo_params])
+                        val_param_data.append(np.insert(normalized_cosmo_params, 0, fn))
+                        orig_val_param_data.append(np.insert(cosmo_params, 0, fn))
                     # for fn in [filename1, filename2, filename3]:
                     #     va.write([fn, normalized_cosmo_params])
                     #     vao.write([fn, cosmo_params])
