@@ -116,22 +116,22 @@ if __name__ == "__main__":
             np.save(file=f, arr=density[j, :, :])
             f.close()
             del f
-            np.savetxt(param_file, np.hstack((filename1, normalized_cosmo_params)))
-            np.savetxt(orig_param_file, np.hstack((filename1, cosmo_params)))
+            np.savetxt(param_file, [filename1, normalized_cosmo_params])
+            np.savetxt(orig_param_file, [filename1, cosmo_params])
 
             f = gzip.GzipFile(filename2, 'w')
             np.save(file=f, arr=density[:, j, :])
             f.close()
             del f
-            np.savetxt(param_file, np.hstack((filename2, normalized_cosmo_params)))
-            np.savetxt(orig_param_file, np.hstack((filename2, cosmo_params)))
+            np.savetxt(param_file, [filename2, normalized_cosmo_params])
+            np.savetxt(orig_param_file, [filename2, cosmo_params])
 
             f = gzip.GzipFile(filename3, 'w')
             np.save(file=f, arr=density[:, :, j])
             f.close()
             del f
-            np.savetxt(param_file, np.hstack((filename3, normalized_cosmo_params)))
-            np.savetxt(orig_param_file, np.hstack((filename3, cosmo_params)))
+            np.savetxt(param_file, [filename3, normalized_cosmo_params])
+            np.savetxt(orig_param_file, [filename3, cosmo_params])
 
     print(f'Mean of log10(den) across the training set: {mean}')
     print(f'Std. dev of log10(den) across the training set: {std}')
