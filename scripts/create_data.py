@@ -3,6 +3,7 @@ import h5py
 import numpy as np
 import argparse
 import shutil
+import gzip
 
 from utils import print_options, preprocess_a_map, read_hdf5, normalize_cosmo_param
 
@@ -10,6 +11,7 @@ from utils import print_options, preprocess_a_map, read_hdf5, normalize_cosmo_pa
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Sets preprocessing options')
     parser.add_argument('--num_sims', type=int, default=1000, help='No. of simulations to use')
+    # parser.add_argument('--grid_size', type=int, default=64, help='Grid size for the density fields that need to be procesed and saved.')
     parser.add_argument('--train_frac', type=float, default=0.8, help='The fraction of simulations to use for training.')
     parser.add_argument('--test_frac', type=float, default=0.1, help='The fraction of simulations to use for testing. If train_frac + test_frac != 1.0, then the remaining are stored as validation set.')
     parser.add_argument('--seed', type=int, default=42, help='Seed to use for splitting data into train, test, and val sets.')
@@ -19,6 +21,8 @@ if __name__ == "__main__":
     # parser.add_argument('--output_folder_name', type=str, default='train', help='Name of training folder where processed outputs are stored.')
 
     opt = parser.parse_args()
+
+    dtype = np.float32
 
     # Print options
     print_options(opt)
@@ -58,36 +62,58 @@ if __name__ == "__main__":
     cosmo_arr = []
     for i in range(opt.num_sims):
         if i in train_sim_numbers:  # We want to calculate statistics only using the training set.
-            density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'))
+            density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'), dtype=dtype)
             den_arr.append(np.log10(density))
             cosmo_arr.append(cosmo_params)
 
     mean, std = np.mean(den_arr), np.std(den_arr)
     del den_arr
 
-    cosmo_arr = np.array(cosmo_arr)
+    cosmo_arr = np.array(cosmo_arr, dtype=dtype)
     min_vals = np.array([cosmo_arr[:, i].min() for i in range(5)])  # 5 parameters.
     max_vals = np.array([cosmo_arr[:, i].max() for i in range(5)])  # 5 parameters.
 
     for i in range(opt.num_sims):
-        density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'))
+        density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'), dtype=dtype)
         density = preprocess_a_map(density, mean=mean, std=std)
         cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
 
         assert cosmo_params.min() >= -1 and cosmo_params.max() <= 1  # Due to the normalization.
+        
+        # Now extract 2D maps from the 3D field
+        # Assert it's a cube.
+        assert density.shape[0] == density.shape[1]
+        assert density.shape[0] == density.shape[2]
 
-        if i in train_sim_numbers:
-            filename = os.path.join('train', f'processed_sim{i}_LH_z0_grid64_masCIC.h5')
-        elif i in test_sim_numbers:
-            filename = os.path.join('test', f'processed_sim{i}_LH_z0_grid64_masCIC.h5')
-        elif val:
-            if i in val_sim_numbers:
-                filename = os.path.join('val', f'processed_sim{i}_LH_z0_grid64_masCIC.h5')
+        for i in range(density.shape[0]):
+            if i in train_sim_numbers:
+                filename1 = os.path.join('train', f'processed_sim{i}_X{i}_LH_z0_grid64_masCIC.npy.gz')
+                filename2 = os.path.join('train', f'processed_sim{i}_Y{i}_LH_z0_grid64_masCIC.npy.gz')
+                filename3 = os.path.join('train', f'processed_sim{i}_Z{i}_LH_z0_grid64_masCIC.npy.gz')
+            elif i in test_sim_numbers:
+                filename1 = os.path.join('test', f'processed_sim{i}_X{i}_LH_z0_grid64_masCIC.npy.gz')
+                filename2 = os.path.join('test', f'processed_sim{i}_Y{i}_LH_z0_grid64_masCIC.npy.gz')
+                filename3 = os.path.join('test', f'processed_sim{i}_Z{i}_LH_z0_grid64_masCIC.npy.gz')
+            elif val:
+                if i in val_sim_numbers:
+                    filename1 = os.path.join('val', f'processed_sim{i}_X{i}_LH_z0_grid64_masCIC.npy.gz')
+                    filename2 = os.path.join('val', f'processed_sim{i}_Y{i}_LH_z0_grid64_masCIC.npy.gz')
+                    filename3 = os.path.join('val', f'processed_sim{i}_Z{i}_LH_z0_grid64_masCIC.npy.gz')
 
-        h5f = h5py.File(filename, 'w')
-        dataset = h5f.create_dataset('3D_density_field', data=density, compression='gzip')
-        dataset.attrs['cosmo_params'] = cosmo_params  # Order of storing parameters is same as Cosmo_params.dat
-        h5f.close()
+            f = gzip.GzipFile(filename1, 'w')
+            np.save(file=f, arr=density[i, :, :])
+            f.close()
+            del f
+
+            f = gzip.GzipFile(filename2, 'w')
+            np.save(file=f, arr=density[:, i, :])
+            f.close()
+            del f
+
+            f = gzip.GzipFile(filename3, 'w')
+            np.save(file=f, arr=density[:, :, i])
+            f.close()
+            del f
 
     print(f'Mean of log10(den) across the training set: {mean}')
     print(f'Std. dev of log10(den) across the training set: {std}')
