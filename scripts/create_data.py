@@ -122,6 +122,9 @@ if __name__ == "__main__":
         assert density.shape[0] == density.shape[1]
         assert density.shape[0] == density.shape[2]
 
+        normalized_cosmo_params = normalized_cosmo_params.astype(object)
+        cosmo_params = cosmo_params.astype(object)
+
         for j in range(density.shape[0]):
             if i in train_sim_numbers:
                 filename1 = os.path.join('train', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
