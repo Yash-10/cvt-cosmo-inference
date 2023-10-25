@@ -74,6 +74,8 @@ if __name__ == "__main__":
         density = preprocess_a_map(density, mean=mean, std=std)
         cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
 
+        assert cosmo_params.min() >= -1 and cosmo_params.max() <= 1  # Due to the normalization.
+
         if i in train_sim_numbers:
             filename = os.path.join('train', f'processed_sim{i}_LH_z0_grid64_masCIC.h5')
         elif i in test_sim_numbers:
