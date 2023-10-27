@@ -12,7 +12,7 @@ from utils import print_options, preprocess_a_map, read_hdf5, normalize_cosmo_pa
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Sets preprocessing options')
     parser.add_argument('--num_sims', type=int, default=1000, help='No. of simulations to use')
-    # parser.add_argument('--grid_size', type=int, default=64, help='Grid size for the density fields that need to be procesed and saved.')
+    parser.add_argument('--grid_size', type=int, default=64, help='Grid size for the density fields that need to be procesed and saved.')
     parser.add_argument('--train_frac', type=float, default=0.8, help='The fraction of simulations to use for training.')
     parser.add_argument('--test_frac', type=float, default=0.1, help='The fraction of simulations to use for testing. If train_frac + test_frac != 1.0, then the remaining are stored as validation set.')
     parser.add_argument('--seed', type=int, default=42, help='Seed to use for splitting data into train, test, and val sets.')
@@ -63,7 +63,12 @@ if __name__ == "__main__":
     cosmo_arr = []
     for i in range(opt.num_sims):
         if i in train_sim_numbers:  # We want to calculate statistics only using the training set.
-            density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'), dtype=dtype)
+            density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'), dtype=dtype)
+            # Assert it's a cube
+            assert density.shape[0] == density.shape[1]
+            assert density.shape[0] == density.shape[2]
+            # Assert the grid size passed via commandline and the density field shape match.
+            assert density.shape[0] == opt.grid_size
             den_arr.append(np.log10(density))
             cosmo_arr.append(cosmo_params)
 
@@ -111,7 +116,7 @@ if __name__ == "__main__":
         orig_val_param_data = []
 
     for i in range(opt.num_sims):
-        density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid64_masCIC.h5'), dtype=dtype)
+        density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'), dtype=dtype)
         density = preprocess_a_map(density, mean=mean, std=std)
         normalized_cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
 
@@ -127,9 +132,9 @@ if __name__ == "__main__":
 
         for j in range(density.shape[0]):
             if i in train_sim_numbers:
-                filename1 = os.path.join('train', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
-                filename2 = os.path.join('train', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
-                filename3 = os.path.join('train', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
+                filename1 = os.path.join('train', f'processed_sim{i}_X{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                filename2 = os.path.join('train', f'processed_sim{i}_Y{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                filename3 = os.path.join('train', f'processed_sim{i}_Z{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
                 for fn in [filename1, filename2, filename3]:
                     train_param_data.append(np.insert(normalized_cosmo_params, 0, fn))
                     orig_train_param_data.append(np.insert(cosmo_params, 0, fn))
@@ -137,9 +142,9 @@ if __name__ == "__main__":
                 #     tr.write([fn, normalized_cosmo_params])
                 #     tro.write([fn, cosmo_params])
             elif i in test_sim_numbers:
-                filename1 = os.path.join('test', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
-                filename2 = os.path.join('test', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
-                filename3 = os.path.join('test', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
+                filename1 = os.path.join('test', f'processed_sim{i}_X{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                filename2 = os.path.join('test', f'processed_sim{i}_Y{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                filename3 = os.path.join('test', f'processed_sim{i}_Z{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
                 for fn in [filename1, filename2, filename3]:
                     test_param_data.append(np.insert(normalized_cosmo_params, 0, fn))
                     orig_test_param_data.append(np.insert(cosmo_params, 0, fn))
@@ -148,9 +153,9 @@ if __name__ == "__main__":
                 #     teo.write([fn, cosmo_params])
             elif val:
                 if i in val_sim_numbers:
-                    filename1 = os.path.join('val', f'processed_sim{i}_X{j}_LH_z0_grid64_masCIC.npy.gz')
-                    filename2 = os.path.join('val', f'processed_sim{i}_Y{j}_LH_z0_grid64_masCIC.npy.gz')
-                    filename3 = os.path.join('val', f'processed_sim{i}_Z{j}_LH_z0_grid64_masCIC.npy.gz')
+                    filename1 = os.path.join('val', f'processed_sim{i}_X{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                    filename2 = os.path.join('val', f'processed_sim{i}_Y{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                    filename3 = os.path.join('val', f'processed_sim{i}_Z{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
                     for fn in [filename1, filename2, filename3]:
                         val_param_data.append(np.insert(normalized_cosmo_params, 0, fn))
                         orig_val_param_data.append(np.insert(cosmo_params, 0, fn))
