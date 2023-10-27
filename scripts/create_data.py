@@ -120,7 +120,10 @@ if __name__ == "__main__":
         density = preprocess_a_map(density, mean=mean, std=std)
         normalized_cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
 
-        assert normalized_cosmo_params.min() >= -1 and normalized_cosmo_params.max() <= 1  # Due to the normalization.
+        if i in train_sim_numbers:
+            # This condition necessarily needs to hold for training data since the normalization took place using training parameter values.
+            # But it may not hold for val/test sets. So we don't check for this condition in those cases.
+            assert normalized_cosmo_params.min() >= 0 and normalized_cosmo_params.max() <= 1  # Due to the min-max normalization.
 
         # Now extract 2D maps from the 3D field
         # Assert it's a cube.

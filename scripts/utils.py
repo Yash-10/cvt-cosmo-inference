@@ -19,6 +19,7 @@ def preprocess_a_map(map, mean=None, std=None):
             "Both mean and std must not be None. Please calculate the mean and std across the training set and pass these values to this function."
         )
 
+    # Standardize map.
     map = (map - mean) / std
     return map
 
