@@ -21,8 +21,10 @@ if __name__ == "__main__":
     )
     parser.add_argument('--precomputed_mean', type=float, default=np.nan, help='Precomputed mean to use for preprocessing. This is helpful for transfer learning/fine-tuning.')
     parser.add_argument('--precomputed_stddev', type=float, default=np.nan, help='Precomputed standard deviation to use for preprocessing. This is helpful for transfer learning/fine-tuning.')
-    parser.add_argument('-precomputed_min_vals', '--list', nargs='+', help='Precomputed minimum values of the parameters. This is helpful for transfer learning/fine-tuning.')
-    parser.add_argument('-precomputed_max_vals', '--list', nargs='+', help='Precomputed maximum values of the parameters. This is helpful for transfer learning/fine-tuning.')
+    parser.add_argument('--precomputed_min_vals', action='store', type=float, nargs=5)
+    parser.add_argument('--precomputed_max_vals', action='store', type=float, nargs=5)
+    # parser.add_argument('-precomputed_min_vals', '--list', nargs='+', help='Precomputed minimum values of the parameters. This is helpful for transfer learning/fine-tuning.')
+    # parser.add_argument('-precomputed_max_vals', '--list', nargs='+', help='Precomputed maximum values of the parameters. This is helpful for transfer learning/fine-tuning.')
 
     # parser.add_argument('--output_folder_name', type=str, default='train', help='Name of training folder where processed outputs are stored.')
 
