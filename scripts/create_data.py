@@ -93,8 +93,8 @@ if __name__ == "__main__":
         min_vals = np.array([cosmo_arr[:, i].min() for i in range(5)])  # 5 parameters.
         max_vals = np.array([cosmo_arr[:, i].max() for i in range(5)])  # 5 parameters.
     elif opt.precomputed_min_vals is not None and opt.precomputed_max_vals is not None:
-        min_vals = opt.precomputed_min_vals
-        max_vals = opt.precomputed_max_vals
+        min_vals = np.array(opt.precomputed_min_vals)
+        max_vals = np.array(opt.precomputed_max_vals)
     else:
         raise ValueError("One of min_vals/max_vals is specified but the other is not specified. Either specify both or don't specify both.")
 
