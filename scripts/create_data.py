@@ -19,6 +19,11 @@ if __name__ == "__main__":
     parser.add_argument('--path', type=str, default=None,
         help='Path to the folder containing the 3D density fields for n simulations. This folder must contain n folders with names [0 to n-1], and each folder must contain a HDF5 file storing the density field.'
     )
+    parser.add_argument('--precomputed_mean', default=np.nan, type=float, default=np.nan, help='Precomputed mean to use for preprocessing. This is helpful for transfer learning/fine-tuning.')
+    parser.add_argument('--precomputed_stddev', default=np.nan, type=float, default=np.nan, help='Precomputed standard deviation to use for preprocessing. This is helpful for transfer learning/fine-tuning.')
+    parser.add_argument('-precomputed_min_vals', '--list', default=None, nargs='+', help='Precomputed minimum values of the parameters. This is helpful for transfer learning/fine-tuning.')
+    parser.add_argument('-precomputed_max_vals', '--list', default=None, nargs='+', help='Precomputed maximum values of the parameters. This is helpful for transfer learning/fine-tuning.')
+
     # parser.add_argument('--output_folder_name', type=str, default='train', help='Name of training folder where processed outputs are stored.')
 
     opt = parser.parse_args()
@@ -72,12 +77,24 @@ if __name__ == "__main__":
             den_arr.append(np.log10(density))
             cosmo_arr.append(cosmo_params)
 
-    mean, std = np.mean(den_arr), np.std(den_arr)
+    if opt.precomputed_mean is None and opt.precomputed_stddev is None:
+        mean, std = np.mean(den_arr), np.std(den_arr)
+    elif opt.precomputed_mean is not None and opt.precomputed_stddev is not None:
+        mean, std = opt.precomputed_mean, opt.precomputed_stddev
+    else:
+        raise ValueError("One of mean/stddev is specified but the other is not specified. Either specify both or don't specify both.")
+
     del den_arr
 
-    cosmo_arr = np.array(cosmo_arr, dtype=dtype)
-    min_vals = np.array([cosmo_arr[:, i].min() for i in range(5)])  # 5 parameters.
-    max_vals = np.array([cosmo_arr[:, i].max() for i in range(5)])  # 5 parameters.
+    if opt.precomputed_min_vals is None and opt.precomputed_max_vals is None:
+        cosmo_arr = np.array(cosmo_arr, dtype=dtype)
+        min_vals = np.array([cosmo_arr[:, i].min() for i in range(5)])  # 5 parameters.
+        max_vals = np.array([cosmo_arr[:, i].max() for i in range(5)])  # 5 parameters.
+    elif opt.precomputed_min_vals is not None and opt.precomputed_max_vals is not None:
+        min_vals = opt.min_vals
+        max_vals = opt.max_vals
+    else:
+        raise ValueError("One of min_vals/max_vals is specified but the other is not specified. Either specify both or don't specify both.")
 
     train_param_file = os.path.join('train', 'train_normalized_cosmo_params_train.txt')
     train_orig_param_file = os.path.join('train', 'train_orig_cosmo_params_train.txt')
