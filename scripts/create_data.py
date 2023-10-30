@@ -19,10 +19,10 @@ if __name__ == "__main__":
     parser.add_argument('--path', type=str, default=None,
         help='Path to the folder containing the 3D density fields for n simulations. This folder must contain n folders with names [0 to n-1], and each folder must contain a HDF5 file storing the density field.'
     )
-    parser.add_argument('--precomputed_mean', default=np.nan, type=float, default=np.nan, help='Precomputed mean to use for preprocessing. This is helpful for transfer learning/fine-tuning.')
-    parser.add_argument('--precomputed_stddev', default=np.nan, type=float, default=np.nan, help='Precomputed standard deviation to use for preprocessing. This is helpful for transfer learning/fine-tuning.')
-    parser.add_argument('-precomputed_min_vals', '--list', default=None, nargs='+', help='Precomputed minimum values of the parameters. This is helpful for transfer learning/fine-tuning.')
-    parser.add_argument('-precomputed_max_vals', '--list', default=None, nargs='+', help='Precomputed maximum values of the parameters. This is helpful for transfer learning/fine-tuning.')
+    parser.add_argument('--precomputed_mean', type=float, default=np.nan, help='Precomputed mean to use for preprocessing. This is helpful for transfer learning/fine-tuning.')
+    parser.add_argument('--precomputed_stddev', type=float, default=np.nan, help='Precomputed standard deviation to use for preprocessing. This is helpful for transfer learning/fine-tuning.')
+    parser.add_argument('-precomputed_min_vals', '--list', nargs='+', help='Precomputed minimum values of the parameters. This is helpful for transfer learning/fine-tuning.')
+    parser.add_argument('-precomputed_max_vals', '--list', nargs='+', help='Precomputed maximum values of the parameters. This is helpful for transfer learning/fine-tuning.')
 
     # parser.add_argument('--output_folder_name', type=str, default='train', help='Name of training folder where processed outputs are stored.')
 
