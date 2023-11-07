@@ -79,9 +79,9 @@ if __name__ == "__main__":
             den_arr.append(np.log10(density))
             cosmo_arr.append(cosmo_params)
 
-    if opt.precomputed_mean is None and opt.precomputed_stddev is None:
+    if np.isnan(opt.precomputed_mean) and np.isnan(opt.precomputed_stddev):
         mean, std = np.mean(den_arr), np.std(den_arr)
-    elif opt.precomputed_mean is not None and opt.precomputed_stddev is not None:
+    elif ~np.isnan(opt.precomputed_mean) and ~np.isnan(opt.precomputed_stddev):
         mean, std = opt.precomputed_mean, opt.precomputed_stddev
     else:
         raise ValueError("One of mean/stddev is specified but the other is not specified. Either specify both or don't specify both.")
