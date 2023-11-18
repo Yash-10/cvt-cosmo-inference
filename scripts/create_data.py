@@ -3,6 +3,7 @@ import h5py
 import pandas as pd
 import numpy as np
 import argparse
+import random
 import shutil
 import gzip
 
@@ -15,6 +16,7 @@ if __name__ == "__main__":
     parser.add_argument('--grid_size', type=int, default=64, help='Grid size for the density fields that need to be procesed and saved.')
     parser.add_argument('--train_frac', type=float, default=0.8, help='The fraction of simulations to use for training.')
     parser.add_argument('--test_frac', type=float, default=0.1, help='The fraction of simulations to use for testing. If train_frac + test_frac != 1.0, then the remaining are stored as validation set.')
+    parser.add_argument('--num_maps_per_projection_direction', type=int, help='No. of maps to select per projection direction. Total no. of maps is three times this number.')
     parser.add_argument('--seed', type=int, default=42, help='Seed to use for splitting data into train, test, and val sets.')
     parser.add_argument('--path', type=str, default=None,
         help='Path to the folder containing the 3D density fields for n simulations. This folder must contain n folders with names [0 to n-1], and each folder must contain a HDF5 file storing the density field.'
@@ -34,6 +36,9 @@ if __name__ == "__main__":
 
     # Print options
     print_options(opt)
+
+    if opt.num_maps_per_projection_direction > opt.grid_size:
+        raise ValueError("No. of 2D maps to extract exceeds the grid size!")
 
     # Decide splits for train, test, and val
     np.random.seed(opt.seed)
@@ -152,7 +157,9 @@ if __name__ == "__main__":
         normalized_cosmo_params = normalized_cosmo_params.astype(object)
         cosmo_params = cosmo_params.astype(object)
 
-        for j in range(density.shape[0]):
+        slice_indices = random.sample(range(density.shape[0]), k=opt.num_maps_per_projection_direction)
+
+        for j in slice_indices:
             if i in train_sim_numbers:
                 filename1 = os.path.join('train', f'processed_sim{i}_X{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
                 filename2 = os.path.join('train', f'processed_sim{i}_Y{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
