@@ -139,6 +139,9 @@ if __name__ == "__main__":
         val_param_data = []
         orig_val_param_data = []
 
+    random.seed(opt.seed)
+    slice_indices_list = [random.sample(range(density.shape[0]), k=opt.num_maps_per_projection_direction) for _ in range(opt.num_sims)]
+
     for i in range(opt.num_sims):
         density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'), dtype=dtype)
         density = preprocess_a_map(density, mean=mean, std=std)
@@ -157,7 +160,7 @@ if __name__ == "__main__":
         normalized_cosmo_params = normalized_cosmo_params.astype(object)
         cosmo_params = cosmo_params.astype(object)
 
-        slice_indices = random.sample(range(density.shape[0]), k=opt.num_maps_per_projection_direction)
+        slice_indices = slice_indices_list[i]
         print(slice_indices)
 
         for j in slice_indices:
