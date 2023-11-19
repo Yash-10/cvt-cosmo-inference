@@ -139,7 +139,7 @@ if __name__ == "__main__":
         val_param_data = []
         orig_val_param_data = []
 
-    random.seed(opt.seed)
+    # random.seed(opt.seed)
     slice_indices_list = [random.sample(range(density.shape[0]), k=opt.num_maps_per_projection_direction) for _ in range(opt.num_sims)]
 
     for i in range(opt.num_sims):
