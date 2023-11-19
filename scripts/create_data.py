@@ -158,6 +158,7 @@ if __name__ == "__main__":
         cosmo_params = cosmo_params.astype(object)
 
         slice_indices = random.sample(range(density.shape[0]), k=opt.num_maps_per_projection_direction)
+        print(slice_indices)
 
         for j in slice_indices:
             if i in train_sim_numbers:
