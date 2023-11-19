@@ -161,7 +161,6 @@ if __name__ == "__main__":
         cosmo_params = cosmo_params.astype(object)
 
         slice_indices = slice_indices_list[i]
-        print(slice_indices)
 
         for j in slice_indices:
             if i in train_sim_numbers:
