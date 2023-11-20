@@ -17,9 +17,8 @@ def print_options(opt):
     print("------------ End ------------")
     print('\n')
 
-def preprocess_a_map(map, mean=None, std=None):
-    # Take logarithm.
-    map = np.log10(map)
+def preprocess_a_map(map, mean=None, std=None, log_1_plus=False):
+    map = np.log10(1 + map) if log_1_plus else np.log10(map)
     if mean is None or std is None:
         raise ValueError(
             "Both mean and std must not be None. Please calculate the mean and std across the training set and pass these values to this function."
