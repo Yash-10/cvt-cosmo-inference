@@ -7,8 +7,7 @@ import random
 import shutil
 import gzip
 
-from utils import print_options, preprocess_a_map, read_hdf5, normalize_cosmo_param
-
+from utils import print_options, preprocess_a_map, read_hdf5, normalize_cosmo_param, approx_lte, approx_gte
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Sets preprocessing options')
@@ -151,7 +150,7 @@ if __name__ == "__main__":
         if i in train_sim_numbers:
             # This condition necessarily needs to hold for training data since the normalization took place using training parameter values.
             # But it may not hold for val/test sets. So we don't check for this condition in those cases.
-            assert normalized_cosmo_params.min() >= 0 and normalized_cosmo_params.max() <= 1  # Due to the min-max normalization.
+            assert approx_gte(normalized_cosmo_params.min(), 0) and approx_lte(normalized_cosmo_params.max(), 1)  # Due to the min-max normalization.
 
         # Now extract 2D maps from the 3D field
         # Assert it's a cube.

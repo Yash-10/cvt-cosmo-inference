@@ -3,6 +3,12 @@ import numpy as np
 import glob
 import h5py
 
+# Below two from https://stackoverflow.com/a/55945030
+def approx_lte(x, y):
+    return x <= y or np.isclose(x, y)
+def approx_gte(x, y):
+    return x >= y or np.isclose(x, y)
+
 def print_options(opt):
     print('\n')
     print("------------ Options ------------")
