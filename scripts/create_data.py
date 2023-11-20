@@ -26,6 +26,7 @@ if __name__ == "__main__":
     parser.add_argument('--precomputed_min_vals', action='store', type=float, nargs=5)
     parser.add_argument('--precomputed_max_vals', action='store', type=float, nargs=5)
     parser.add_argument('--prefix', type=str, default='', help='Prefix in the filenames.')
+    parser.add_argument('--dataset_name', type=str, default='3D_density_field', help='Name of the HDF5 dataset.')
     # parser.add_argument('-precomputed_min_vals', '--list', nargs='+', help='Precomputed minimum values of the parameters. This is helpful for transfer learning/fine-tuning.')
     # parser.add_argument('-precomputed_max_vals', '--list', nargs='+', help='Precomputed maximum values of the parameters. This is helpful for transfer learning/fine-tuning.')
     # parser.add_argument('--output_folder_name', type=str, default='train', help='Name of training folder where processed outputs are stored.')
@@ -75,7 +76,7 @@ if __name__ == "__main__":
     cosmo_arr = []
     for i in range(opt.num_sims):
         if i in train_sim_numbers:  # We want to calculate statistics only using the training set.
-            density, cosmo_params = read_hdf5(os.path.join(opt.path, f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'), dtype=dtype)
+            density, cosmo_params = read_hdf5(os.path.join(opt.path, f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'), dtype=dtype, dataset_name=opt.dataset_name)
             # Assert it's a cube
             assert density.shape[0] == density.shape[1]
             assert density.shape[0] == density.shape[2]
@@ -143,7 +144,7 @@ if __name__ == "__main__":
     slice_indices_list = [random.sample(range(density.shape[0]), k=opt.num_maps_per_projection_direction) for _ in range(opt.num_sims)]
 
     for i in range(opt.num_sims):
-        density, cosmo_params = read_hdf5(os.path.join(opt.path, f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'), dtype=dtype)
+        density, cosmo_params = read_hdf5(os.path.join(opt.path, f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'), dtype=dtype, dataset_name=opt.dataset_name)
         density = preprocess_a_map(density, mean=mean, std=std)
         normalized_cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
 

@@ -27,9 +27,9 @@ def normalize_cosmo_param(param, min_vals, max_vals):
     # param is a 1d array with six entries. Similarly for min_vals and max_vals.
     return (param - min_vals) / (max_vals - min_vals)
 
-def read_hdf5(filename, dtype=np.float32):
+def read_hdf5(filename, dtype=np.float32, dataset_name='3D_density_field'):
     hf = h5py.File(filename, 'r')
-    dataset = hf.get('3D_density_field')
+    dataset = hf.get(dataset_name)
     cosmo_params = dataset.attrs['cosmo_params']
     density_field = dataset[:]
 
