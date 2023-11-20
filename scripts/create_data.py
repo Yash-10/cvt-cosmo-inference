@@ -82,7 +82,7 @@ if __name__ == "__main__":
             assert density.shape[0] == density.shape[2]
             # Assert the grid size passed via commandline and the density field shape match.
             assert density.shape[0] == opt.grid_size
-            den_arr.append(np.log10(density))
+            den_arr.append(np.log10(1+density) if opt.log_1_plus else np.log10(density))
             cosmo_arr.append(cosmo_params)
 
     if np.isnan(opt.precomputed_mean) and np.isnan(opt.precomputed_stddev):
