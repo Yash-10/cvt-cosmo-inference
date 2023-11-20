@@ -75,7 +75,7 @@ if __name__ == "__main__":
     cosmo_arr = []
     for i in range(opt.num_sims):
         if i in train_sim_numbers:  # We want to calculate statistics only using the training set.
-            density, cosmo_params = read_hdf5(os.path.join(opt.path, f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'), dtype=dtype)
+            density, cosmo_params = read_hdf5(os.path.join(opt.path, f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'), dtype=dtype)
             # Assert it's a cube
             assert density.shape[0] == density.shape[1]
             assert density.shape[0] == density.shape[2]
