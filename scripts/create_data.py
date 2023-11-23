@@ -39,7 +39,7 @@ if __name__ == "__main__":
     print_options(opt)
 
     if opt.num_maps_per_projection_direction > opt.grid_size:
-        raise ValueError("No. of 2D maps to extract exceeds the grid size!")
+        raise ValueError("No. of 2D maps to extract per dimension exceeds the grid size!")
 
     # Decide splits for train, test, and val
     np.random.seed(opt.seed)
@@ -76,7 +76,8 @@ if __name__ == "__main__":
     cosmo_arr = []
     for i in range(opt.num_sims):
         if i in train_sim_numbers:  # We want to calculate statistics only using the training set.
-            density, cosmo_params = read_hdf5(os.path.join(opt.path, f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'), dtype=dtype, dataset_name=opt.dataset_name)
+            suffix = f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if opt.prefix == '' else f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
+            density, cosmo_params = read_hdf5(os.path.join(opt.path, suffix), dtype=dtype, dataset_name=opt.dataset_name)
             # Assert it's a cube
             assert density.shape[0] == density.shape[1]
             assert density.shape[0] == density.shape[2]
