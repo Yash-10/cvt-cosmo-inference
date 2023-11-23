@@ -145,7 +145,8 @@ if __name__ == "__main__":
     slice_indices_list = [random.sample(range(density.shape[0]), k=opt.num_maps_per_projection_direction) for _ in range(opt.num_sims)]
 
     for i in range(opt.num_sims):
-        density, cosmo_params = read_hdf5(os.path.join(opt.path, f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'), dtype=dtype, dataset_name=opt.dataset_name)
+        suffix = f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if opt.prefix == '' else f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
+        density, cosmo_params = read_hdf5(os.path.join(opt.path, suffix), dtype=dtype, dataset_name=opt.dataset_name)
         density = preprocess_a_map(density, mean=mean, std=std, log_1_plus=opt.log_1_plus)
         normalized_cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
 
