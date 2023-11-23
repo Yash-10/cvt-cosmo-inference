@@ -189,11 +189,11 @@ def test_CKA(n_layers,
              activations2,
              cka1=None,
              cka2=None):
-  """Test for checking that update_state_across_models() works as intended"""
+    """Test for checking that update_state_across_models() works as intended"""
     if cka1 is None:
-    cka1 = MinibatchCKA(n_layers, n_layers2, across_models=True)
+        cka1 = MinibatchCKA(n_layers, n_layers2, across_models=True)
     if cka2 is None:
-    cka2 = MinibatchCKA(n_layers + n_layers2)
+        cka2 = MinibatchCKA(n_layers + n_layers2)
 
     cka1.update_state_across_models(activations1, activations2)
     cka1_result = cka1.result().numpy()
