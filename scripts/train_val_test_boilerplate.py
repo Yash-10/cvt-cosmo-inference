@@ -15,19 +15,19 @@ def init_valid_loss(model, val_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu
     valid_loss1, valid_loss2 = torch.zeros(len(g)).to(device), torch.zeros(len(g)).to(device)
     min_valid_loss, points = 0.0, 0
     for x, y, _ in val_loader:
-    with torch.no_grad():
-        bs   = x.shape[0]                #batch size
-        x    = x.to(device=device)       #maps
-        y    = y.to(device=device)[:,g]  #parameters
-        p    = model(x)                  #NN output
-        y_NN = p[:,g]                    #posterior mean
-        e_NN = p[:,h]                    #posterior std
-        loss1 = torch.mean((y_NN - y)**2,                axis=0)
-        loss2 = torch.mean(((y_NN - y)**2 - e_NN**2)**2, axis=0)
-        loss  = torch.mean(torch.log(loss1) + torch.log(loss2))
-        valid_loss1 += loss1*bs
-        valid_loss2 += loss2*bs
-        points += bs
+        with torch.no_grad():
+            bs   = x.shape[0]                #batch size
+            x    = x.to(device=device)       #maps
+            y    = y.to(device=device)[:,g]  #parameters
+            p    = model(x)                  #NN output
+            y_NN = p[:,g]                    #posterior mean
+            e_NN = p[:,h]                    #posterior std
+            loss1 = torch.mean((y_NN - y)**2,                axis=0)
+            loss2 = torch.mean(((y_NN - y)**2 - e_NN**2)**2, axis=0)
+            loss  = torch.mean(torch.log(loss1) + torch.log(loss2))
+            valid_loss1 += loss1*bs
+            valid_loss2 += loss2*bs
+            points += bs
     min_valid_loss = torch.log(valid_loss1/points) + torch.log(valid_loss2/points)
     min_valid_loss = torch.mean(min_valid_loss).item()
     print('Initial valid loss = %.3e'%min_valid_loss)
@@ -35,7 +35,7 @@ def init_valid_loss(model, val_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu
 
 
 def train(
-        model, train_loader, val_loader, epochs, optimizer, scheduler,
+        model, train_loader, val_loader, epochs, optimizer, scheduler, min_valid_loss,
         fmodel='weights.pt', floss='loss.txt', g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu'
 ):
     slopes_omega_m = []
@@ -148,6 +148,8 @@ def train(
 
     stop = time.time()
     print('Time take (h):', "{:.4f}".format((stop-start)/3600.0))
+
+    return model
 
 
 def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu'):
