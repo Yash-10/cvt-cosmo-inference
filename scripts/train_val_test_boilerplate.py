@@ -149,7 +149,7 @@ def train(
     stop = time.time()
     print('Time take (h):', "{:.4f}".format((stop-start)/3600.0))
 
-    return model
+    return model, slopes_omega_m, slopes_sigma_8
 
 
 def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu'):
