@@ -257,4 +257,4 @@ def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu', minimum
     #np.savetxt(fresults,  dataset)
     #np.savetxt(fresults1, Norm_error)
 
-    return params_true, params_NN, errors_NN
+    return params_true, params_NN, errors_NN, filenames
