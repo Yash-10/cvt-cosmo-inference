@@ -152,7 +152,21 @@ def train(
     return model, slopes_omega_m, slopes_sigma_8
 
 
-def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu'):
+def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu', minimum=None, maximum=None):
+    """_summary_
+
+    Args:
+        model (_type_): _description_
+        test_loader (_type_): _description_
+        g (list, optional): _description_. Defaults to [0,1,2,3,4].
+        h (list, optional): _description_. Defaults to [5,6,7,8,9].
+        device (str, optional): _description_. Defaults to 'cpu'.
+        minimum (_type_, optional): Minimum value of each cosmology parameter. Defaults to None.
+        maximum (_type_, optional): Maximum value of each cosmology parameter. Defaults to None.
+
+    Returns:
+        _type_: _description_
+    """
     # get the number of maps in the test set
     num_maps = 0
     for x, y, _ in test_loader:
@@ -202,8 +216,6 @@ def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu'):
 
     # de-normalize
     # IMPORTANT: These values must match the ones used during normalization in the preprocessing step before training.
-    minimum = np.array([0.1003, 0.03003, 0.5003, 0.8001, 0.6001])
-    maximum = np.array([0.4997, 0.06993, 0.8999, 1.1999, 0.9985])
     params_true = params_true*(maximum - minimum) + minimum
     params_NN   = params_NN*(maximum - minimum) + minimum
     errors_NN   = errors_NN*(maximum - minimum)
@@ -244,3 +256,5 @@ def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu'):
     #dataset[:,12:]  = errors_NN
     #np.savetxt(fresults,  dataset)
     #np.savetxt(fresults1, Norm_error)
+
+    return params_true, params_NN, errors_NN
