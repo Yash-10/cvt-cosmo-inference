@@ -1,8 +1,10 @@
 import os
 import numpy as np
 import glob
+import pandas as pd
 import h5py
 from sklearn.metrics import r2_score, mean_squared_error
+import Pk_library.Pk_library as PKL
 
 
 # Below two from https://stackoverflow.com/a/55945030
@@ -211,17 +213,112 @@ def get_CKA(n_layers, n_layers2, activations1, activations2):
     return cka_result
 
 def get_r2_score(params_true, params_NN):
-  r2_scores_params = []
-  for i in range(params_true.shape[1]):
-    r2_scores_params.append(
-      r2_score(params_true[:, i], params_NN[:, i])
-    )
-  return r2_scores_params
+    r2_scores_params = []
+    for i in range(params_true.shape[1]):
+        r2_scores_params.append(
+            r2_score(params_true[:, i], params_NN[:, i])
+        )
+    return r2_scores_params
 
 def get_rmse_score(params_true, params_NN):
-  rmse_scores_params = []
-  for i in range(params_true.shape[1]):
-    rmse_scores_params.append(
-      mean_squared_error(params_true[:, i], params_NN[:, i], squared=False)  # squared=False means RMSE
-    )
-  return rmse_scores_params
+    rmse_scores_params = []
+    for i in range(params_true.shape[1]):
+        rmse_scores_params.append(
+            mean_squared_error(params_true[:, i], params_NN[:, i], squared=False)  # squared=False means RMSE
+        )
+    return rmse_scores_params
+
+# Power spectrum
+def power_spectrum(delta, BoxSize=1000, vel_field=False, dimensional=2, MAS='CIC', axis=0):
+    """Calculates the 2D power spectrum of a 2D field. It internally calculates the contrast field and then calculates the power spectrum.
+    For velocity fields, the field is kept as it is.
+
+    Args:
+        delta (numpy.ndarray): Density slice (note: this is the field rather than the field contrast).
+        BoxSize (float): Simulation box size.
+    Returns:
+        (numpy.ndarray, numpy.ndarray): The wavenumbers and power spectrum amplitudes.
+    """
+    delta = delta.astype(np.float32)
+    if not vel_field:
+        # Calculate contrast field.
+        delta = delta / np.mean(delta, dtype=np.float64); delta = delta - 1.0
+
+    threads = 2
+    if dimensional == 2:
+        Pk2D2 = PKL.Pk_plane(delta, BoxSize, MAS, threads)
+        # get the attributes of the routine
+        k2      = Pk2D2.k      #k in h/Mpc
+        Pk2     = Pk2D2.Pk     #Pk in (Mpc/h)^2
+    elif dimensional == 3:
+        Pk2D2 = PKL.Pk(delta, BoxSize, MAS, threads)
+        # get the attributes of the routine
+        k2      = Pk2D2.k3D     #k in h/Mpc
+        Pk2     = Pk2D2.Pk[:, 0]     #Pk in (Mpc/h)^2
+
+    return k2, Pk2
+
+import matplotlib.pyplot as plt
+def plot_results1(param_index, param_name, params_true, params_NN, errors_NN, minimum, maximum):
+    """Plots all predictions for all maps of all simulations."""
+    fig=plt.figure(figsize=(7,7))
+    plt.xlabel(r'${\rm Truth}$')
+    plt.ylabel(r'${\rm Inference}$')
+    plt.title(param_name,fontsize=18)
+
+    plt.errorbar(params_true[:,param_index], params_NN[:,param_index], errors_NN[:,param_index],
+                linestyle='None', lw=1, fmt='o', ms=2, elinewidth=1, capsize=0, c='gray')
+    plt.plot([minimum[param_index],maximum[param_index]], [minimum[param_index],maximum[param_index]], color='k')
+    plt.show()
+
+def plot_results2(param_index, param_name, params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum):
+    """Plots the average of predictions for all maps for one simulation, and does this for all simulations."""
+    fig=plt.figure(figsize=(7,7))
+    plt.xlabel(r'${\rm Truth}$')
+    plt.ylabel(r'${\rm Inference}$')
+    plt.title(param_name,fontsize=18)
+
+    plt.errorbar(params_true2[:,param_index], averaged_params_NN[:,param_index], averaged_errors_NN[:,param_index],
+                linestyle='None', lw=1, fmt='o', ms=2, elinewidth=1, capsize=0, c='gray')
+    plt.plot([minimum[param_index],maximum[param_index]], [minimum[param_index],maximum[param_index]], color='k')
+    plt.show()
+
+def plot_std_sim(param_index, param_name, std_sim_NN, averaged_params_NN):
+    """Plots the stddev of predictions for all maps for one simulation, and does this for all simulations."""
+    fig=plt.figure(figsize=(7,7))
+    plt.xlabel('Coefficient of variation of predictions')  # Coefficient of variation = std. dev / mean
+    plt.ylabel('Counts')
+    plt.title(param_name,fontsize=18)
+
+    plt.hist(std_sim_NN[:, param_index]/averaged_params_NN[:,param_index], color='gray')
+    plt.show()
+
+def post_testing_analysis(df, num_sims=1000):
+    params_true2 = []
+    averaged_params_NN = []
+    averaged_errors_NN = []
+    std_sim_NN = []
+
+    for i in range(num_sims):  # 1000 simulations.
+        df_subset = df[df['filename'].str.contains(f'_sim{i}_')]
+
+        if df_subset.empty:  # This simulation was not in the test set
+            continue
+
+        p = [np.mean(df_subset[f'params_NN_{j}']) for j in range(5)]
+        e = [np.mean(df_subset[f'errors_NN_{j}']) for j in range(5)]
+
+        # Standard deviation of all point estimates for a single simulation.
+        p_std = [np.std(df_subset[f'params_NN_{j}']) for j in range(5)]
+
+        averaged_params_NN.append(p)
+        averaged_errors_NN.append(e)
+        std_sim_NN.append(p_std)
+        params_true2.append(df_subset.iloc[0][[f'params_true_{k}' for k in range(5)]].tolist())
+
+    params_true2 = np.vstack(params_true2)
+    averaged_params_NN = np.vstack(averaged_params_NN)
+    averaged_errors_NN = np.vstack(averaged_errors_NN)
+    std_sim_NN = np.vstack(std_sim_NN)
+
+    print(params_true2.shape, averaged_params_NN.shape, averaged_errors_NN.shape)
