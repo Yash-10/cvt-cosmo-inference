@@ -293,7 +293,8 @@ def plot_std_sim(param_index, param_name, std_sim_NN, averaged_params_NN):
     plt.hist(std_sim_NN[:, param_index]/averaged_params_NN[:,param_index], color='gray')
     plt.show()
 
-def post_testing_analysis(df, num_sims=1000):
+# This function makes all final analysis plot in a single function for ease of use.
+def post_testing_analysis(df, params_true, params_NN, errors_NN, minimum, maximum, num_maps_per_projection_direction=10, num_sims=1000, params=[0,1,2,3,4]):
     params_true2 = []
     averaged_params_NN = []
     averaged_errors_NN = []
@@ -322,3 +323,65 @@ def post_testing_analysis(df, num_sims=1000):
     std_sim_NN = np.vstack(std_sim_NN)
 
     print(params_true2.shape, averaged_params_NN.shape, averaged_errors_NN.shape)
+
+    # Make plots
+    plot_results1(0, r'$\Omega_{\rm m}$', params_true, params_NN, errors_NN, minimum, maximum)
+    plot_results1(1, r'$\Omega_{\rm b}$', params_true, params_NN, errors_NN, minimum, maximum)
+    plot_results1(2, r'$h$', params_true, params_NN, errors_NN, minimum, maximum)
+    plot_results1(3, r'$n_s$', params_true, params_NN, errors_NN, minimum, maximum)
+    plot_results1(4, r'$\sigma_8$', params_true, params_NN, errors_NN, minimum, maximum)
+
+    plot_results2(0, r'$\Omega_{\rm m}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(1, r'$\Omega_{\rm b}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(2, r'$h$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(3, r'$n_s$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(4, r'$\sigma_8$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+
+    plot_std_sim(0, r'$\Omega_{\rm m}$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(1, r'$\Omega_{\rm b}$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(2, r'$h$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(3, r'$n_s$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(4, r'$\sigma_8$', std_sim_NN, averaged_params_NN)
+
+    params_true2 = []
+    averaged_params_NN = []
+    averaged_errors_NN = []
+    std_sim_NN = []
+    counter = 0
+
+    for i in range(num_maps_per_projection_direction*3):  # Total no. of 2d maps from a single 3d cube.
+        for direction in ['X', 'Y', 'Z']:
+            df_subset = df[df['filename'].str.contains(f'_{direction}{i}_')]
+
+            if df_subset.empty:  # This 2d map was not in the test set for any test simulation.
+                continue
+
+            p = [np.mean(df_subset[f'params_NN_{j}']) for j in range(len(params))]
+            e = [np.mean(df_subset[f'errors_NN_{j}']) for j in range(len(params))]
+
+            for ss in range(len(params)):
+                # Each value must be from a different simulation, so no overlap must be there.
+                assert np.unique(df_subset[f'params_true_{ss}']).shape == df_subset[f'params_true_{ss}'].shape
+
+            # Standard deviation of all point estimates for a single simulation.
+            p_std = [np.std(df_subset[f'params_NN_{j}']) for j in range(5)]
+
+            averaged_params_NN.append(p)
+            averaged_errors_NN.append(e)
+            std_sim_NN.append(p_std)
+            params_true2.append(df_subset.iloc[0][[f'params_true_{k}' for k in range(len(params))]].tolist())
+            counter += 1
+
+    assert counter == (num_maps_per_projection_direction * 3) * 3
+
+    params_true2 = np.vstack(params_true2)
+    averaged_params_NN = np.vstack(averaged_params_NN)
+    averaged_errors_NN = np.vstack(averaged_errors_NN)
+    std_sim_NN = np.vstack(std_sim_NN)
+
+    # We use the same function as the above test in the above cell, but here the variables themselves are changed.
+    plot_std_sim(0, r'$\Omega_{\rm m}$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(1, r'$\Omega_{\rm b}$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(2, r'$h$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(3, r'$n_s$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(4, r'$\sigma_8$', std_sim_NN, averaged_params_NN)
