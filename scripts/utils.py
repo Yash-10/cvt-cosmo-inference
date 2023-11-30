@@ -251,7 +251,7 @@ def power_spectrum(delta, BoxSize=1000, vel_field=False, dimensional=2, MAS='CIC
         k2      = Pk2D2.k      #k in h/Mpc
         Pk2     = Pk2D2.Pk     #Pk in (Mpc/h)^2
     elif dimensional == 3:
-        Pk2D2 = PKL.Pk(delta, BoxSize, MAS, threads)
+        Pk2D2 = PKL.Pk(delta, BoxSize, axis, MAS, threads)
         # get the attributes of the routine
         k2      = Pk2D2.k3D     #k in h/Mpc
         Pk2     = Pk2D2.Pk[:, 0]     #Pk in (Mpc/h)^2
