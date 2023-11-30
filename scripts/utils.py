@@ -258,6 +258,23 @@ def power_spectrum(delta, BoxSize=1000, vel_field=False, dimensional=2, MAS='CIC
 
     return k2, Pk2
 
+import smoothing_library as SL
+
+def smooth_3D_field(image, BoxSize=1000, R=50):
+    field = image.astype(np.float32)
+    grid    = field.shape[0]
+    Filter  = 'Top-Hat'
+    threads = 1
+    #kmin    = 0  #h/Mpc
+    #kmax    = 10 #h/Mpc
+
+    # compute the filter in Fourier space
+    W_k = SL.FT_filter(BoxSize, R, grid, Filter, threads)
+    # smooth the field
+    field_smoothed = SL.field_smoothing(field, W_k, threads)
+
+    return field_smoothed
+
 import matplotlib.pyplot as plt
 def plot_results1(param_index, param_name, params_true, params_NN, errors_NN, minimum, maximum):
     """Plots all predictions for all maps of all simulations."""
