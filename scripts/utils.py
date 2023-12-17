@@ -49,6 +49,9 @@ def read_hdf5(filename, dtype=np.float32, dataset_name='3D_density_field'):
     return density_field, cosmo_params
 
 
+def calculate_overdensity(arr):
+    return arr / np.mean(arr)
+
 # CKA code
 # coding=utf-8
 # Copyright 2023 The Google Research Authors.

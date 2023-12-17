@@ -7,7 +7,7 @@ import random
 import shutil
 import gzip
 
-from utils import print_options, preprocess_a_map, read_hdf5, normalize_cosmo_param, approx_lte, approx_gte
+from utils import print_options, preprocess_a_map, read_hdf5, normalize_cosmo_param, approx_lte, approx_gte, calculate_overdensity
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Sets preprocessing options')
@@ -27,6 +27,8 @@ if __name__ == "__main__":
     parser.add_argument('--prefix', type=str, default='', help='Prefix in the filenames.')
     parser.add_argument('--dataset_name', type=str, default='3D_density_field', help='Name of the HDF5 dataset.')
     parser.add_argument('--log_1_plus', action='store_true', help='If specified, take log10 of 1 + pixel_value instead of log10 of pixel value.')
+    parser.add_argument('--bias', type='float', default=np.nan, help='Value of bias parameter. This is used when preparing data for transfer learning on halo catalog data after pretraining on DM density.')
+
     # parser.add_argument('-precomputed_min_vals', '--list', nargs='+', help='Precomputed minimum values of the parameters. This is helpful for transfer learning/fine-tuning.')
     # parser.add_argument('-precomputed_max_vals', '--list', nargs='+', help='Precomputed maximum values of the parameters. This is helpful for transfer learning/fine-tuning.')
     # parser.add_argument('--output_folder_name', type=str, default='train', help='Name of training folder where processed outputs are stored.')
@@ -78,6 +80,10 @@ if __name__ == "__main__":
         if i in train_sim_numbers:  # We want to calculate statistics only using the training set.
             suffix = f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if opt.prefix == '' else f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
             density, cosmo_params = read_hdf5(os.path.join(opt.path, suffix), dtype=dtype, dataset_name=opt.dataset_name)
+            # Calculate the overdensity field: 1 + delta.
+            density = calculate_overdensity(density)
+            if not np.isnan(opt.bias):  # This means we are preparing data for transfer learning.
+                density = (density + (opt.bias - 1)) / opt.bias
             # Assert it's a cube
             assert density.shape[0] == density.shape[1]
             assert density.shape[0] == density.shape[2]
@@ -147,6 +153,10 @@ if __name__ == "__main__":
     for i in range(opt.num_sims):
         suffix = f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if opt.prefix == '' else f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
         density, cosmo_params = read_hdf5(os.path.join(opt.path, suffix), dtype=dtype, dataset_name=opt.dataset_name)
+        # Calculate overdensity.
+        density = calculate_overdensity(density)
+        if not np.isnan(opt.bias):  # This means we are preparing data for transfer learning.
+            density = (density + (opt.bias - 1)) / opt.bias
         density = preprocess_a_map(density, mean=mean, std=std, log_1_plus=opt.log_1_plus)
         normalized_cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
 
