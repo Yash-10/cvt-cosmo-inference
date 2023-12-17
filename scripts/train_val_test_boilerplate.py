@@ -103,7 +103,7 @@ def train(
                 intermediate_outputs_A = [o.cpu() for o in intermediate_outputs_A]
                 intermediate_outputs_B = [ob.cpu() for ob in intermediate_outputs_B]
 
-                sim = get_CKA(n_layers=6, n_layers2=6, activations1=intermediate_outputs_A, activations2=intermediate_outputs_B)  # change 14 to some other number if no. of layers are different.
+                sim = get_CKA(n_layers=6, n_layers2=6, activations1=intermediate_outputs_A, activations2=intermediate_outputs_B)  # todo: Make this a user-controllable parameter.
                 cka_mats_val.append(sim)
 
                 val_true_params.append(y)
