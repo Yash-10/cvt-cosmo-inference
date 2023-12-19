@@ -154,9 +154,9 @@ if __name__ == "__main__":
     for i in range(opt.num_sims):
         suffix = f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if opt.prefix == '' else f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
         density, cosmo_params = read_hdf5(os.path.join(opt.path, suffix), dtype=dtype, dataset_name=opt.dataset_name)
+        mean_densities.append(np.mean(density))
         # Calculate overdensity.
         density = calculate_overdensity(density)
-        mean_densities.append(np.mean(density))
         if not np.isnan(opt.bias):  # This means we are preparing data for transfer learning.
             density = (density + (opt.bias - 1)) / opt.bias
         density = preprocess_a_map(density, mean=mean, std=std, log_1_plus=opt.log_1_plus)
