@@ -33,6 +33,24 @@ def preprocess_a_map(map, mean=None, std=None, log_1_plus=False):
     map = (map - mean) / std
     return map
 
+def unprocess_a_map(map, mean, std, original_density_mean, log_1_plus=False):
+    """_summary_
+
+    Args:
+        map (_type_): 2D map.
+        mean (_type_): Mean of {overdensity+[log10(map) or log10(1+map)]} values across the training set.
+        std (_type_): Std. dev of {overdensity+[log10(map) or log10(1+map)]} values across the training set.
+        original_density_mean (_type_): Mean of densities in the 2D map of the original map.
+        log_1_plus (bool, optional): _description_. Defaults to False.
+
+    Returns:
+        _type_: _description_
+    """
+    unstandardized_map = map * std + mean
+    unstandardized_map = 10 ** unstandardized_map - 1 if log_1_plus else 10 ** unstandardized_map
+    original_density = unstandardized_map * original_density_mean
+    return original_density
+
 def normalize_cosmo_param(param, min_vals, max_vals):
     # param is a 1d array with six entries. Similarly for min_vals and max_vals.
     return (param - min_vals) / (max_vals - min_vals)

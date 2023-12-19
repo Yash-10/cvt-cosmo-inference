@@ -150,11 +150,13 @@ if __name__ == "__main__":
     random.seed(opt.seed)
     slice_indices_list = [random.sample(range(density.shape[0]), k=opt.num_maps_per_projection_direction) for _ in range(opt.num_sims)]
 
+    mean_densities = []  # Order is sim0, sim1, sim2, ...., sim999.
     for i in range(opt.num_sims):
         suffix = f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if opt.prefix == '' else f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
         density, cosmo_params = read_hdf5(os.path.join(opt.path, suffix), dtype=dtype, dataset_name=opt.dataset_name)
         # Calculate overdensity.
         density = calculate_overdensity(density)
+        mean_densities.append(np.mean(density))
         if not np.isnan(opt.bias):  # This means we are preparing data for transfer learning.
             density = (density + (opt.bias - 1)) / opt.bias
         density = preprocess_a_map(density, mean=mean, std=std, log_1_plus=opt.log_1_plus)
@@ -248,3 +250,4 @@ if __name__ == "__main__":
     np.save(f'{opt.prefix}_dataset_std.npy', std)
     np.save(f'{opt.prefix}_dataset_min_vals.npy', min_vals)
     np.save(f'{opt.prefix}_dataset_max_vals.npy', max_vals)
+    np.save(f'{opt.prefix}_dataset_mean_densities.npy', mean_densities)
