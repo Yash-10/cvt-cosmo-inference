@@ -37,6 +37,12 @@ def normalize_cosmo_param(param, min_vals, max_vals):
     # param is a 1d array with six entries. Similarly for min_vals and max_vals.
     return (param - min_vals) / (max_vals - min_vals)
 
+# def unprocess_a_map(map, mean, std, log_1_plus=False, bias=np.nan):
+#     if not np.isnan(bias):
+#         map = map * bias - (bias - 1)
+#     x = (map * std + mean)
+#     return 10**x-1 if log_1_plus else 10**x
+
 def read_hdf5(filename, dtype=np.float32, dataset_name='3D_density_field'):
     hf = h5py.File(filename, 'r')
     dataset = hf.get(dataset_name)

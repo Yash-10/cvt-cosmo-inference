@@ -243,3 +243,8 @@ if __name__ == "__main__":
     print(f'Std. dev of log10(den) across the training set: {std}')
     print(f'Min values of parameters across the training set: {min_vals}')
     print(f'Max values of parameters across the training set: {max_vals}')
+
+    np.save(f'{opt.prefix}_dataset_mean.npy', mean)
+    np.save(f'{opt.prefix}_dataset_std.npy', std)
+    np.save(f'{opt.prefix}_dataset_min_vals.npy', min_vals)
+    np.save(f'{opt.prefix}_dataset_max_vals.npy', max_vals)
