@@ -33,7 +33,7 @@ def preprocess_a_map(map, mean=None, std=None, log_1_plus=False):
     map = (map - mean) / std
     return map
 
-def unprocess_a_map(map, mean, std, original_density_mean, log_1_plus=False):
+def unprocess_a_map(map, mean, std, original_density_mean, log_1_plus=False, bias=np.nan):
     """_summary_
 
     Args:
@@ -48,6 +48,8 @@ def unprocess_a_map(map, mean, std, original_density_mean, log_1_plus=False):
     """
     unstandardized_map = map * std + mean
     unstandardized_map = 10 ** unstandardized_map - 1 if log_1_plus else 10 ** unstandardized_map
+    if not np.isnan(bias):
+        unstandardized_map = unstandardized_map * bias - (bias - 1)
     original_density = unstandardized_map * original_density_mean
     return original_density
 
