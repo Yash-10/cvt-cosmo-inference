@@ -329,6 +329,21 @@ def plot_results2(param_index, param_name, params_true2, averaged_params_NN, ave
     plt.plot([minimum[param_index],maximum[param_index]], [minimum[param_index],maximum[param_index]], color='k')
     plt.show()
 
+def plot_results3(param_index, param_name, params_true, params_NN, errors_NN, minimum, maximum):
+    """Plots all predictions for all maps of all simulations."""
+    fig=plt.figure(figsize=(7,7))
+    plt.xlabel(r'${\rm Truth}$')
+    plt.ylabel(r'${\rm Inference} - {\rm Truth}$')
+
+    accuracy = np.mean(errors_NN[:,param_index] / params_NN[:,param_index])
+
+    plt.title(param_name + ': ' + rf'<\delta\theta/\theta> = {accuracy*100}%',fontsize=18)
+
+    plt.errorbar(params_true[:,param_index], params_NN[:,param_index]-params_true[:,param_index], errors_NN[:,param_index],
+                linestyle='None', lw=1, fmt='o', ms=2, elinewidth=1, capsize=0, c='gray')
+    plt.plot([minimum[param_index],maximum[param_index]], [minimum[param_index],maximum[param_index]], color='k')
+    plt.show()
+
 def plot_std_sim(param_index, param_name, std_sim_NN, averaged_params_NN):
     """Plots the stddev of predictions for all maps for one simulation, and does this for all simulations."""
     fig=plt.figure(figsize=(7,7))
