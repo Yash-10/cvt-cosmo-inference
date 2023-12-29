@@ -337,7 +337,7 @@ def plot_results3(param_index, param_name, params_true, params_NN, errors_NN, mi
 
     accuracy = np.mean(errors_NN[:,param_index] / params_NN[:,param_index])
 
-    plt.title(param_name + ': ' + rf'<\delta\theta/\theta> = {accuracy*100}%',fontsize=18)
+    plt.title(param_name + ': ' + rf'<\delta\theta/\theta> = {accuracy*100:.2f}%',fontsize=18)
 
     plt.errorbar(params_true[:,param_index], params_NN[:,param_index]-params_true[:,param_index], errors_NN[:,param_index],
                 linestyle='None', lw=1, fmt='o', ms=2, elinewidth=1, capsize=0, c='gray')
