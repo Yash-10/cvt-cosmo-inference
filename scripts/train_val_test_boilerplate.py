@@ -40,6 +40,7 @@ def train(
 ):
     slopes_omega_m = []
     slopes_sigma_8 = []
+    val_loss_decrease_thresh = 1e-3
 
     # do a loop over all epochs
     start = time.time()
@@ -131,7 +132,7 @@ def train(
         print('%03d %.3e %.3e '%(epoch, train_loss, valid_loss), end='')
 
         # save model if it is better
-        if valid_loss<min_valid_loss:
+        if (valid_loss < min_valid_loss) and (min_valid_loss - valid_loss > val_loss_decrease_thresh):
             torch.save(model.state_dict(), fmodel)
             min_valid_loss = valid_loss
             print('(C) ', end='')
