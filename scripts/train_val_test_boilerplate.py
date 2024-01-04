@@ -36,11 +36,11 @@ def init_valid_loss(model, val_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu
 
 def train(
         model, train_loader, val_loader, epochs, optimizer, scheduler, min_valid_loss,
-        fmodel='weights.pt', floss='loss.txt', g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu'
+        fmodel='weights.pt', floss='loss.txt', g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu',
+        calculate_val_cka_per_epoch=True, val_loss_decrease_thresh=1e-2
 ):
     slopes_omega_m = []
     slopes_sigma_8 = []
-    val_loss_decrease_thresh = 1e-3
 
     # do a loop over all epochs
     start = time.time()
@@ -93,19 +93,20 @@ def train(
                 valid_loss2 += loss2*bs
                 points     += bs
 
-                # CKA on validation set
-                mid_getter = MidGetter(model, return_layers={'LeakyReLU': 'LeakyReLU'}, keep_output=True)
-                mid_outputs1 = mid_getter(x)
-                mid_outputs2 = mid_getter(x)
+                if calculate_val_cka_per_epoch:
+                    # CKA on validation set
+                    mid_getter = MidGetter(model, return_layers={'LeakyReLU': 'LeakyReLU'}, keep_output=True)
+                    mid_outputs1 = mid_getter(x)
+                    mid_outputs2 = mid_getter(x)
 
-                intermediate_outputs_A = mid_outputs1[0]['LeakyReLU']
-                intermediate_outputs_B = mid_outputs2[0]['LeakyReLU']
+                    intermediate_outputs_A = mid_outputs1[0]['LeakyReLU']
+                    intermediate_outputs_B = mid_outputs2[0]['LeakyReLU']
 
-                intermediate_outputs_A = [o.cpu() for o in intermediate_outputs_A]
-                intermediate_outputs_B = [ob.cpu() for ob in intermediate_outputs_B]
+                    intermediate_outputs_A = [o.cpu() for o in intermediate_outputs_A]
+                    intermediate_outputs_B = [ob.cpu() for ob in intermediate_outputs_B]
 
-                sim = get_CKA(n_layers=6, n_layers2=6, activations1=intermediate_outputs_A, activations2=intermediate_outputs_B)  # todo: Make this a user-controllable parameter.
-                cka_mats_val.append(sim)
+                    sim = get_CKA(n_layers=6, n_layers2=6, activations1=intermediate_outputs_A, activations2=intermediate_outputs_B)  # todo: Make this a user-controllable parameter.
+                    cka_mats_val.append(sim)
 
                 val_true_params.append(y)
                 val_pred_params.append(y_NN)
@@ -143,9 +144,10 @@ def train(
         f.write('%d %.5e %.5e\n'%(epoch, train_loss, valid_loss))
         f.close()
 
-        # Save the averaged CKA matrix across the entire val set.
-        final_cka = np.stack(cka_mats_val).mean(axis=0)
-        np.save(f'cka_epoch{epoch}_val.npy', final_cka)
+        if calculate_val_cka_per_epoch:
+            # Save the averaged CKA matrix across the entire val set.
+            final_cka = np.stack(cka_mats_val).mean(axis=0)
+            np.save(f'cka_epoch{epoch}_val.npy', final_cka)
 
     stop = time.time()
     print('Time take (h):', "{:.4f}".format((stop-start)/3600.0))
