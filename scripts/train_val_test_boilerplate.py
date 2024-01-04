@@ -121,7 +121,7 @@ def train(
         sigma_8_pred = val_pred_params[:, 4]
 
         rmse_this_epoch = get_rmse_score(val_true_params.cpu().numpy(), val_pred_params.cpu().numpy())
-        sigma_bar_this_epoch = np.std(val_pred_err_params.cpu().numpy(), axis=0)
+        sigma_bar_this_epoch = np.mean(val_pred_err_params.cpu().numpy(), axis=0)
 
         slope_omega_m, _ = np.polyfit(omega_m_true.cpu().numpy(), omega_m_pred.cpu().numpy(), 1)
         slope_sigma_8, _ = np.polyfit(sigma_8_true.cpu().numpy(), sigma_8_pred.cpu().numpy(), 1)
@@ -143,7 +143,8 @@ def train(
             print('(C) ', end='')
         print('')
 
-        print(f'\tRMSE: {rmse_this_epoch}, sigma_bar: {sigma_bar_this_epoch}')
+        print(f'RMSE: {rmse_this_epoch}')
+        print(f'sigma_bar: {sigma_bar_this_epoch}')
 
         # save losses to file
         f = open(floss, 'a')

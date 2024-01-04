@@ -93,7 +93,7 @@ def post_test_analysis(
     std_sim_NN = np.vstack(std_sim_NN)
 
     rmse_score = get_rmse_score(params_true, params_NN)
-    sigma_bar = np.std(errors_NN, axis=0)
+    sigma_bar = np.mean(errors_NN, axis=0)
     plot_results1(0, r'$\Omega_{\rm m}: $' + f'RMSE = {rmse_score[0]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar[0]:.3f}$', params_true, params_NN, errors_NN, minimum, maximum)
     plot_results1(1, r'$\Omega_{\rm b}: $' + f'RMSE = {rmse_score[1]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar[1]:.3f}$', params_true, params_NN, errors_NN, minimum, maximum)
     plot_results1(2, r'$h: $' + f'RMSE = {rmse_score[2]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar[2]:.3f}$', params_true, params_NN, errors_NN, minimum, maximum)
