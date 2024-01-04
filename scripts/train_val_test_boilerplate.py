@@ -75,8 +75,7 @@ def train(
         # do validation: cosmo alone & all params
         valid_loss1, valid_loss2 = torch.zeros(len(g)).to(device), torch.zeros(len(g)).to(device)
         valid_loss, points = 0.0, 0
-        val_true_params = []
-        val_pred_params = []
+        val_true_params, val_pred_params, val_pred_err_params = [], [], []
         model.eval()
         for x, y, _ in val_loader:
             with torch.no_grad():
@@ -110,6 +109,7 @@ def train(
 
                 val_true_params.append(y)
                 val_pred_params.append(y_NN)
+                val_pred_err_params.append(e_NN)
 
         val_true_params = torch.vstack(val_true_params)
         val_pred_params = torch.vstack(val_pred_params)
@@ -118,6 +118,9 @@ def train(
         sigma_8_true = val_true_params[:, 4]
         omega_m_pred = val_pred_params[:, 0]
         sigma_8_pred = val_pred_params[:, 4]
+
+        rmse_this_epoch = get_rmse_score(val_true_params, val_pred_params)
+        sigma_bar_this_epoch = np.std(val_pred_err_params, axis=0)
 
         slope_omega_m, _ = np.polyfit(omega_m_true.cpu().numpy(), omega_m_pred.cpu().numpy(), 1)
         slope_sigma_8, _ = np.polyfit(sigma_8_true.cpu().numpy(), sigma_8_pred.cpu().numpy(), 1)
@@ -138,6 +141,8 @@ def train(
             min_valid_loss = valid_loss
             print('(C) ', end='')
         print('')
+
+        print(f'\tRMSE: {rmse_this_epoch}, sigma_bar: {sigma_bar_this_epoch}')
 
         # save losses to file
         f = open(floss, 'a')
