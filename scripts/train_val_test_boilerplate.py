@@ -113,6 +113,7 @@ def train(
 
         val_true_params = torch.vstack(val_true_params)
         val_pred_params = torch.vstack(val_pred_params)
+        val_pred_err_params = torch.vstack(val_pred_err_params)
 
         omega_m_true = val_true_params[:, 0]
         sigma_8_true = val_true_params[:, 4]
