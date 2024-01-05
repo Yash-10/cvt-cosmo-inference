@@ -1,3 +1,4 @@
+import os
 import glob
 import gzip
 import torch
@@ -53,6 +54,7 @@ def post_test_analysis(
         )
         return chi_square_score
 
+    print('Chi-squared scores')
     print('Omega_m', get_chi_square_score(params_true, params_NN, 0))
     print('Omega_b', get_chi_square_score(params_true, params_NN, 1))
     print('h', get_chi_square_score(params_true, params_NN, 2))
@@ -63,7 +65,6 @@ def post_test_analysis(
     df = pd.DataFrame(np.hstack((np.expand_dims(filenames, 1), params_true, params_NN, errors_NN)))
     df.columns = ['filename'] + [f'params_true_{i}' for i in range(len(params))] + [f'params_NN_{i}' for i in range(len(params))] + [f'errors_NN_{i}' for i in range(len(params))]
     df.to_csv(test_results_filename)
-    
     
     params_true2 = []
     averaged_params_NN = []
@@ -176,7 +177,6 @@ def post_test_analysis(
             break
 
 
-
     # WE SHOW ONLY A FEW EXAMPLES TO CHECK.
     counter = 0  # Counter to control how many cases to show. Set to zero, incremented after every iteration.
     for i in range(num_sims):
@@ -230,27 +230,27 @@ def post_test_analysis(
     counter = 0
 
     for i in range(num_maps_per_projection_direction*3):  # Total no. of 2d maps from a single 3d cube.
-      for direction in ['X', 'Y', 'Z']:
-        df_subset = df[df['filename'].str.contains(f'_{direction}{i}_')]
+        for direction in ['X', 'Y', 'Z']:
+            df_subset = df[df['filename'].str.contains(f'_{direction}{i}_')]
 
-        if df_subset.empty:  # This 2d map was not in the test set for any test simulation.
-          continue
+            if df_subset.empty:  # This 2d map was not in the test set for any test simulation.
+                continue
 
-        p = [np.mean(df_subset[f'params_NN_{j}']) for j in range(len(params))]
-        e = [np.mean(df_subset[f'errors_NN_{j}']) for j in range(len(params))]
+            p = [np.mean(df_subset[f'params_NN_{j}']) for j in range(len(params))]
+            e = [np.mean(df_subset[f'errors_NN_{j}']) for j in range(len(params))]
 
-        for ss in range(len(params)):
-          # Each value must be from a different simulation, so no overlap must be there.
-          assert np.unique(df_subset[f'params_true_{ss}']).shape == df_subset[f'params_true_{ss}'].shape
+            for ss in range(len(params)):
+                # Each value must be from a different simulation, so no overlap must be there.
+                assert np.unique(df_subset[f'params_true_{ss}']).shape == df_subset[f'params_true_{ss}'].shape
 
-        # Standard deviation of all point estimates for a single simulation.
-        p_std = [np.std(df_subset[f'params_NN_{j}']) for j in range(len(params))]
+            # Standard deviation of all point estimates for a single simulation.
+            p_std = [np.std(df_subset[f'params_NN_{j}']) for j in range(len(params))]
 
-        averaged_params_NN.append(p)
-        averaged_errors_NN.append(e)
-        std_sim_NN.append(p_std)
-        params_true2.append(df_subset.iloc[0][[f'params_true_{k}' for k in range(len(params))]].tolist())
-        counter += 1
+            averaged_params_NN.append(p)
+            averaged_errors_NN.append(e)
+            std_sim_NN.append(p_std)
+            params_true2.append(df_subset.iloc[0][[f'params_true_{k}' for k in range(len(params))]].tolist())
+            counter += 1
 
     assert counter == (num_maps_per_projection_direction * 3) * 3
 
@@ -265,7 +265,6 @@ def post_test_analysis(
     plot_std_sim(2, r'$h$', std_sim_NN, averaged_params_NN)
     plot_std_sim(3, r'$n_s$', std_sim_NN, averaged_params_NN)
     plot_std_sim(4, r'$\sigma_8$', std_sim_NN, averaged_params_NN)
-
 
     #Load model.
     model = model_o3_err(hidden, dr, channels)
@@ -333,3 +332,4 @@ def post_test_analysis(
     cax = divider.append_axes('right', size='5%', pad=0.05)
     fig.colorbar(im, cax=cax, orientation='vertical');
     plt.savefig(cka_filename, bbox_inches='tight', dpi=200)
+    plt.show()
