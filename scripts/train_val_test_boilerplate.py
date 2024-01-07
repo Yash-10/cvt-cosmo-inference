@@ -37,7 +37,7 @@ def init_valid_loss(model, val_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu
 def train(
         model, train_loader, val_loader, epochs, optimizer, scheduler, min_valid_loss,
         fmodel='weights.pt', floss='loss.txt', g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu',
-        calculate_val_cka_per_epoch=True, val_loss_decrease_thresh=1e-2
+        calculate_val_cka_per_epoch=True, val_loss_decrease_thresh=1e-2, minimum=None, maximum=None
 ):
     slopes_omega_m = []
     slopes_sigma_8 = []
@@ -106,6 +106,11 @@ def train(
 
                     sim = get_CKA(n_layers=6, n_layers2=6, activations1=intermediate_outputs_A, activations2=intermediate_outputs_B)  # todo: Make this a user-controllable parameter.
                     cka_mats_val.append(sim)
+
+                # Untransform the parameters for the sake of calculating RMSE and sigma_bar.
+                y = y * (maximum - minimum) + minimum
+                y_NN   = y_NN * (maximum - minimum) + minimum
+                e_NN   = e_NN * (maximum - minimum)
 
                 val_true_params.append(y)
                 val_pred_params.append(y_NN)
