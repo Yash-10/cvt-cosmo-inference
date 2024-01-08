@@ -108,9 +108,9 @@ def train(
                     cka_mats_val.append(sim)
 
                 # Untransform the parameters for the sake of calculating RMSE and sigma_bar.
-                y = y * (maximum - minimum) + minimum
-                y_NN   = y_NN * (maximum - minimum) + minimum
-                e_NN   = e_NN * (maximum - minimum)
+                y = y.cpu() * (maximum - minimum) + minimum
+                y_NN   = y_NN.cpu() * (maximum - minimum) + minimum
+                e_NN   = e_NN.cpu() * (maximum - minimum)
 
                 val_true_params.append(y)
                 val_pred_params.append(y_NN)
