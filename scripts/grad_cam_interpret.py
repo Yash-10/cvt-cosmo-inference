@@ -43,10 +43,13 @@ class GradCAMRegressor:
         model_output = self.model(input_tensor)[:, self.index]
 
         D = model_output - self.ground_truth_param_value
-        d = 1 / D
+        # d = 1 / D
 
         # Backward pass to compute gradients
-        d.backward(torch.ones_like(model_output), retain_graph=True)
+        model_output.backward(torch.ones_like(model_output), retain_graph=True)
+
+        # The approach is from https://arxiv.org/pdf/2304.08192.pdf
+        self.gradients *= -1 / (D**2)
 
         # Retrieve gradients and feature maps
         gradients = self.gradients  # Gradients of the target layer
@@ -92,21 +95,15 @@ class GradCAMRegressor:
 
         # Convert to numpy array for visualization
         gradcam = gradcam.squeeze().cpu().detach().numpy()
-        
-#         print(gradcam.shape, input_tensor.shape)
 
         # Normalize for visualization
         gradcam = (gradcam - np.min(gradcam)) / (np.max(gradcam) - np.min(gradcam) + 1e-8)
 
         # Display the original image
-#         print(input_tensor[0].shape)
         original_image = input_tensor[0].permute(1, 2, 0).detach().cpu().numpy()
         original_image = (original_image - np.min(original_image)) / (np.max(original_image) - np.min(original_image) + 1e-8)
         plt.imshow(original_image)
 
-#         print(input_tensor.min(), gradcam.min())
-
         # Overlay Grad-CAM on the original image
         plt.imshow(gradcam, cmap='jet', alpha=0.3, interpolation='bilinear')
-
         plt.show()
