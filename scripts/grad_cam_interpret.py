@@ -36,7 +36,7 @@ class GradCAMRegressor:
         self.hook[0].remove()
         self.hook[1].remove()
 
-    def generate_gradcam(self, input_tensor):
+    def generate_gradcam(self, input_tensor, interpolate=False, target_size=(64, 64)):  # If interpolate=True, interpolates the Grad-CAM heatmap to target_size. target_size is used only when interpolate=True.
         # Forward pass
         input_tensor.requires_grad_()
         self.model.zero_grad()
@@ -79,6 +79,11 @@ class GradCAMRegressor:
 #         weights = F.adaptive_avg_pool2d(gradients, 1)
 #         cam = torch.sum(weights * feature_maps, dim=1, keepdim=True)
 #         cam = F.relu(cam)
+        
+        if interpolate:
+            cam = cam.unsqueeze(0).unsqueeze(0)
+            # Resize Grad-CAM to match the input image size
+            cam = F.interpolate(cam, size=target_size, mode='bilinear', align_corners=False)
 
         return cam
 
