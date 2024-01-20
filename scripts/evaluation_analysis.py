@@ -42,7 +42,13 @@ def post_test_analysis(
     Returns:
         _type_: _description_
     """
-    from utils import plot_results1, plot_results2, plot_results3, plot_std_sim
+    import seaborn as sns
+    sns.set_context("paper", font_scale = 2)
+    sns.set_style('whitegrid')
+    sns.set(style='ticks')
+
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    from utils import plot_results1, plot_results2, plot_results3, plot_std_sim, get_CKA
 
     # Calculate chi-squared score. See https://iopscience.iop.org/article/10.3847/1538-4357/acac7a
     assert len(params_true) == len(params_NN)
@@ -64,14 +70,14 @@ def post_test_analysis(
     # Create a dataframe of results
     df = pd.DataFrame(np.hstack((np.expand_dims(filenames, 1), params_true, params_NN, errors_NN)))
     df.columns = ['filename'] + [f'params_true_{i}' for i in range(len(params))] + [f'params_NN_{i}' for i in range(len(params))] + [f'errors_NN_{i}' for i in range(len(params))]
-    df.to_csv(test_results_filename)
+    df.to_csv('test_results.csv')
     
     params_true2 = []
     averaged_params_NN = []
     averaged_errors_NN = []
     std_sim_NN = []
 
-    for i in range(num_sims):  # 1000 simulations.
+    for i in range(num_sims):
         df_subset = df[df['filename'].str.contains(f'_sim{i}_')]
 
         if df_subset.empty:  # This simulation was not in the test set
@@ -115,7 +121,7 @@ def post_test_analysis(
     plot_results2(2, r'$h$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
     plot_results2(3, r'$n_s$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
     plot_results2(4, r'$\sigma_8$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
-    
+
     # COV distribution. COV is calculated for each simulation, and its histogram is shown.
     plot_std_sim(0, r'$\Omega_{\rm m}$', std_sim_NN, averaged_params_NN)
     plot_std_sim(1, r'$\Omega_{\rm b}$', std_sim_NN, averaged_params_NN)
@@ -125,10 +131,10 @@ def post_test_analysis(
 
     print(f'Median COV for Omega_m: {np.median(std_sim_NN[:, 0]/averaged_params_NN[:, 0])}')
     print(f'Median COV for sigma_8: {np.median(std_sim_NN[:, 4]/averaged_params_NN[:, 4])}')
-    
+
     df = pd.read_csv(test_results_filename)
-    test_sims = df['filename'].apply(lambda s:s.split('/')[1].split('_')[1]).unique()
-    
+    # test_sims = df['filename'].apply(lambda s:s.split('/')[1].split('_')[1]).unique()
+
     # WE SHOW ONLY A FEW EXAMPLES TO CHECK.
     counter = 0  # Counter to control how many cases to show. Set to zero, incremented after every iteration.
     for i in range(num_sims):
@@ -173,10 +179,11 @@ def post_test_analysis(
 
         counter += 1
 
-        if counter == 5:
+        if counter == 3:
             break
 
 
+    # Redoing the above plot, but showing the coefficient of variation on y-axis
     # WE SHOW ONLY A FEW EXAMPLES TO CHECK.
     counter = 0  # Counter to control how many cases to show. Set to zero, incremented after every iteration.
     for i in range(num_sims):
@@ -205,7 +212,6 @@ def post_test_analysis(
         ax.set_xlabel('Mean density of 2D maps from a single simulation')
         ax.set_ylabel('Coefficient of variation')
         ax.set_title(r'$\Omega_m$')
-    #     ax.set_ylim([0, 0.4])
         plt.show()
 
         fig, ax = plt.subplots(1, 1)
@@ -213,12 +219,11 @@ def post_test_analysis(
         ax.set_xlabel('Mean density of 2D maps from a single simulation')
         ax.set_ylabel('Coefficient of variation')
         ax.set_title(r'$\sigma_8$')
-    #     ax.set_ylim([0.01, 0.05])
         plt.show()
 
         counter += 1
 
-        if counter == 5:
+        if counter == 3:
             break
 
     # Now doing the same test as above, but testing the variance in estimates across simulations.
@@ -266,7 +271,7 @@ def post_test_analysis(
     plot_std_sim(3, r'$n_s$', std_sim_NN, averaged_params_NN)
     plot_std_sim(4, r'$\sigma_8$', std_sim_NN, averaged_params_NN)
 
-    #Load model.
+    # Load model.
     model = model_o3_err(hidden, dr, channels)
     model.to(device=device)
     network_total_params = sum(p.numel() for p in model.parameters())
@@ -290,13 +295,9 @@ def post_test_analysis(
     mid_outputs = mid_getter(x)
     print(len(mid_outputs[0]['LeakyReLU']))  # Will be 6.
 
-    from utils import get_CKA
-
     data_batch = []
     for i, (x, y, _) in enumerate(test_loader):
-        if i == 1:
-            data_batch.append(x)
-            break
+        data_batch.append(x)
 
     x = torch.vstack(data_batch)
     x = x.to(device)
@@ -313,13 +314,6 @@ def post_test_analysis(
         intermediate_outputs_B = [ob.cpu() for ob in intermediate_outputs_B]
 
         sim = get_CKA(n_layers=6, n_layers2=6, activations1=intermediate_outputs_A, activations2=intermediate_outputs_B)
-    
-    import seaborn as sns
-    sns.set_context("paper", font_scale = 2)
-    sns.set_style('whitegrid')
-    sns.set(style='ticks')
-
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
 
     fig, ax = plt.subplots(1, 1, figsize=(6, 6))
     im = ax.imshow(sim, vmin=0, vmax=1)
@@ -333,3 +327,61 @@ def post_test_analysis(
     fig.colorbar(im, cax=cax, orientation='vertical');
     plt.savefig(cka_filename, bbox_inches='tight', dpi=200)
     plt.show()
+
+
+def gradcam_evaluation(test_loader, fmodel, hidden, dr, channels, device='cpu'):
+    from grad_cam_interpret import GradCAMRegressor
+    import torch.nn.functional as F
+
+    images, labels, _ = next(iter(test_loader))
+    images = images.to(device)
+    labels = labels.to(device)
+
+    # Example usage:
+    # Assuming 'model' is your regression model and 'target_layer' is the layer you want to visualize
+    for img_idx in [5, 10, 15]:
+        # Only select one image
+        images_ = images[img_idx, :].unsqueeze(0)
+        print(images_.shape)
+        for index in [0, 4]:
+            if index == 0:
+                param = r'$\Omega_m$'
+            elif index == 4:
+                param = r'$\sigma_8$'
+
+            #Load model.
+            model = model_o3_err(hidden, dr, channels)
+            model.to(device=device)
+            # load the weights in case they exists
+            if os.path.exists(fmodel):
+                model.load_state_dict(torch.load(fmodel, map_location=torch.device(device)))
+                print('Weights loaded')
+
+            gradcam_regressor = GradCAMRegressor(model, target_layer=model.B21, ground_truth_param_value=labels[:, index][img_idx], index=index)
+
+            # Visualize Grad-CAM for the entire image in a regression context
+            gradcam = gradcam_regressor.generate_gradcam(images_)
+
+            # Remove hooks after usage
+            gradcam_regressor.remove_hooks()
+
+            fig, ax = plt.subplots(1, 3, figsize=(10, 6))
+            show_image = images_.squeeze().cpu().detach().numpy()
+            ax[0].imshow(show_image)
+            ax[1].imshow(gradcam.cpu().detach().numpy())
+
+            gradcam = gradcam.unsqueeze(0).unsqueeze(0)
+
+            # Resize Grad-CAM to match the input image size
+            gradcam = F.interpolate(gradcam, size=show_image.shape, mode='bilinear', align_corners=False)
+            # Convert to numpy array for visualization
+            gradcam = gradcam.squeeze().cpu().detach().numpy()
+            # Normalize for visualization
+            gradcam = (gradcam - np.min(gradcam)) / (np.max(gradcam) - np.min(gradcam) + 1e-8)
+            original_image = images_[0].permute(1, 2, 0).detach().cpu().numpy()
+            original_image = (original_image - np.min(original_image)) / (np.max(original_image) - np.min(original_image) + 1e-8)
+            ax[2].imshow(original_image)
+            # Overlay Grad-CAM on the original image
+            ax[2].imshow(gradcam, cmap='jet', alpha=0.3, interpolation='bilinear')
+            ax[0].set_title(param)
+            plt.show()
