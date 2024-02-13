@@ -9,13 +9,15 @@ import matplotlib.pyplot as plt
 from utils import get_rmse_score, unprocess_a_map
 from model_dataset import model_o3_err
 from torch_intermediate_layer_getter import IntermediateLayerGetter as MidGetter
+import torch.nn as nn
 
 
 def post_test_analysis(
         params_true, params_NN, errors_NN, filenames,
         test_loader, params, num_sims, MEAN, STD, MEAN_DENSITIES, minimum, maximum,
         num_maps_per_projection_direction, hidden, dr, channels, fmodel,
-        device='cpu', test_results_filename='test_results.csv', cka_filename='cka_matrix_pretrained_CNN_grid64_test.png'
+        device='cpu', test_results_filename='test_results.csv', cka_filename='cka_matrix_pretrained_CNN_grid64_test.png',
+        smallest_sim_number=0, additional_model_layer=False
 ):
     """This function is designed to make it easier to run inference in multiple experiments for easier comparison.
 
@@ -45,7 +47,7 @@ def post_test_analysis(
     import seaborn as sns
     sns.set_context("paper", font_scale = 2)
     sns.set_style('whitegrid')
-    sns.set(style='ticks')
+    sns.set_theme(style='ticks')
 
     from mpl_toolkits.axes_grid1 import make_axes_locatable
     from utils import plot_results1, plot_results2, plot_results3, plot_std_sim, get_CKA
@@ -70,14 +72,14 @@ def post_test_analysis(
     # Create a dataframe of results
     df = pd.DataFrame(np.hstack((np.expand_dims(filenames, 1), params_true, params_NN, errors_NN)))
     df.columns = ['filename'] + [f'params_true_{i}' for i in range(len(params))] + [f'params_NN_{i}' for i in range(len(params))] + [f'errors_NN_{i}' for i in range(len(params))]
-    df.to_csv('test_results.csv')
+    df.to_csv(test_results_filename)
     
     params_true2 = []
     averaged_params_NN = []
     averaged_errors_NN = []
     std_sim_NN = []
 
-    for i in range(num_sims):
+    for i in range(smallest_sim_number, smallest_sim_number + num_sims):
         df_subset = df[df['filename'].str.contains(f'_sim{i}_')]
 
         if df_subset.empty:  # This simulation was not in the test set
@@ -116,11 +118,13 @@ def post_test_analysis(
     plot_results3(3, r'$n_s$', params_true, params_NN, errors_NN, minimum, maximum)
     plot_results3(4, r'$\sigma_8$', params_true, params_NN, errors_NN, minimum, maximum)
 
-    plot_results2(0, r'$\Omega_{\rm m}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
-    plot_results2(1, r'$\Omega_{\rm b}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
-    plot_results2(2, r'$h$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
-    plot_results2(3, r'$n_s$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
-    plot_results2(4, r'$\sigma_8$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    rmse_score2 = get_rmse_score(params_true2, averaged_params_NN)
+    sigma_bar2 = np.mean(averaged_errors_NN, axis=0)
+    plot_results2(0, r'$\Omega_{\rm m}: $' + f'RMSE = {rmse_score2[0]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar2[0]:.3f}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(1, r'$\Omega_{\rm b}: $' + f'RMSE = {rmse_score2[1]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar2[1]:.3f}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(2, r'$h: $' + f'RMSE = {rmse_score2[2]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar2[2]:.3f}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(3, r'$n_s: $' + f'RMSE = {rmse_score2[3]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar2[3]:.3f}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(4, r'$\sigma_8: $' + f'RMSE = {rmse_score2[4]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar2[4]:.3f}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
 
     # COV distribution. COV is calculated for each simulation, and its histogram is shown.
     plot_std_sim(0, r'$\Omega_{\rm m}$', std_sim_NN, averaged_params_NN)
@@ -279,7 +283,11 @@ def post_test_analysis(
 
     # load the weights in case they exists
     if os.path.exists(fmodel):
-        model.load_state_dict(torch.load(fmodel, map_location=torch.device(device)))
+        if not additional_model_layer:
+            model.load_state_dict(torch.load(fmodel, map_location=torch.device(device)))
+        else:
+            model.FC_final = nn.Linear(len(params)*2, len(params)*2)
+            model.load_state_dict(torch.load(fmodel, map_location=torch.device(device)))
         print('Weights loaded')
     
     data_batch = []

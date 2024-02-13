@@ -12,6 +12,7 @@ from utils import print_options, preprocess_a_map, read_hdf5, normalize_cosmo_pa
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Sets preprocessing options')
     parser.add_argument('--num_sims', type=int, default=1000, help='No. of simulations to use')
+    parser.add_argument('--smallest_sim_number', type=int, default=0, help='The smallest simulation number. The code assumes sequential simulation numbers: [smallest_sim_number, smallest_sim_number+1, smallest_sim_number+2, ..., smallest_sim_number + (num_sims - 1)]. If the sim numbers are not sequential, please assign sequential numbers and then use this script.')
     parser.add_argument('--grid_size', type=int, default=64, help='Grid size for the density fields that need to be procesed and saved.')
     parser.add_argument('--train_frac', type=float, default=0.8, help='The fraction of simulations to use for training.')
     parser.add_argument('--test_frac', type=float, default=0.1, help='The fraction of simulations to use for testing. If train_frac + test_frac != 1.0, then the remaining are stored as validation set.')
@@ -45,7 +46,7 @@ if __name__ == "__main__":
 
     # Decide splits for train, test, and val
     np.random.seed(opt.seed)
-    sim_numbers = np.arange(opt.num_sims)
+    sim_numbers = np.arange(opt.smallest_sim_number, opt.smallest_sim_number+opt.num_sims)
     np.random.shuffle(sim_numbers)
 
     end = round(opt.train_frac*opt.num_sims)
@@ -76,7 +77,7 @@ if __name__ == "__main__":
     # Calculate statistics across training set for normalization.
     den_arr = []
     cosmo_arr = []
-    for i in range(opt.num_sims):
+    for i in range(opt.smallest_sim_number, opt.smallest_sim_number+opt.num_sims):
         if i in train_sim_numbers:  # We want to calculate statistics only using the training set.
             suffix = f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if opt.prefix == '' else f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
             density, cosmo_params = read_hdf5(os.path.join(opt.path, suffix), dtype=dtype, dataset_name=opt.dataset_name)
@@ -148,24 +149,24 @@ if __name__ == "__main__":
         orig_val_param_data = []
 
     random.seed(opt.seed)
-    slice_indices_list = [random.sample(range(density.shape[0]), k=opt.num_maps_per_projection_direction) for _ in range(opt.num_sims)]
+    slice_indices_list = [random.sample(range(density.shape[0]), k=opt.num_maps_per_projection_direction) for _ in range(opt.smallest_sim_number, opt.smallest_sim_number+opt.num_sims)]
 
-    mean_densities = []  # Order is sim0, sim1, sim2, ...., sim999.
-    for i in range(opt.num_sims):
+    mean_densities = []  # Order is sim0, sim1, sim2, ...., sim999, for example.
+    for i in range(opt.smallest_sim_number, opt.smallest_sim_number+opt.num_sims):
         suffix = f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if opt.prefix == '' else f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
         density, cosmo_params = read_hdf5(os.path.join(opt.path, suffix), dtype=dtype, dataset_name=opt.dataset_name)
         mean_densities.append(np.mean(density))
         # Calculate overdensity.
         density = calculate_overdensity(density)
-        if not np.isnan(opt.bias):  # This means we are preparing data for transfer learning.
+        if not np.isnan(opt.bias):  # If bias is provided, use it.
             density = (density + (opt.bias - 1)) / opt.bias
         density = preprocess_a_map(density, mean=mean, std=std, log_1_plus=opt.log_1_plus)
         normalized_cosmo_params = normalize_cosmo_param(cosmo_params, min_vals=min_vals, max_vals=max_vals)
 
-        if i in train_sim_numbers:
-            # This condition necessarily needs to hold for training data since the normalization took place using training parameter values.
-            # But it may not hold for val/test sets. So we don't check for this condition in those cases.
-            assert approx_gte(normalized_cosmo_params.min(), 0) and approx_lte(normalized_cosmo_params.max(), 1)  # Due to the min-max normalization.
+        # if i in train_sim_numbers:
+        #     # Update: this is not true especially if we transfer learn on diff simulations: This condition necessarily needs to hold for training data since the normalization took place using training parameter values.
+        #     # But it may not hold for val/test sets. So we don't check for this condition in those cases.
+        #     assert approx_gte(normalized_cosmo_params.min(), 0) and approx_lte(normalized_cosmo_params.max(), 1)  # Due to the min-max normalization.
 
         # Now extract 2D maps from the 3D field
         # Assert it's a cube.
@@ -175,7 +176,7 @@ if __name__ == "__main__":
         normalized_cosmo_params = normalized_cosmo_params.astype(object)
         cosmo_params = cosmo_params.astype(object)
 
-        slice_indices = slice_indices_list[i]
+        slice_indices = slice_indices_list[i-opt.smallest_sim_number]
 
         for j in slice_indices:
             if i in train_sim_numbers:
