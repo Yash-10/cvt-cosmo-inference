@@ -17,7 +17,7 @@ def post_test_analysis(
         test_loader, params, num_sims, MEAN, STD, MEAN_DENSITIES, minimum, maximum,
         num_maps_per_projection_direction, hidden, dr, channels, fmodel,
         device='cpu', test_results_filename='test_results.csv', cka_filename='cka_matrix_pretrained_CNN_grid64_test.png',
-        smallest_sim_number=0, additional_model_layer=False
+        smallest_sim_number=0, additional_model_layer=False, model=None, return_layers={'LeakyReLU': 'LeakyReLU'}
 ):
     """This function is designed to make it easier to run inference in multiple experiments for easier comparison.
 
@@ -275,9 +275,13 @@ def post_test_analysis(
     plot_std_sim(3, r'$n_s$', std_sim_NN, averaged_params_NN)
     plot_std_sim(4, r'$\sigma_8$', std_sim_NN, averaged_params_NN)
 
-    # Load model.
-    model = model_o3_err(hidden, dr, channels)
-    model.to(device=device)
+    if model is None:
+        # A CNN model is assumed by default and is loaded.
+        # If the model is not a CNN (e.g., a ViT), then pass model through the `model` argument.
+        # Load model.
+        model = model_o3_err(hidden, dr, channels)
+        model.to(device=device)
+
     network_total_params = sum(p.numel() for p in model.parameters())
     print('total number of parameters in the model = %d'%network_total_params)
 
@@ -289,7 +293,7 @@ def post_test_analysis(
             model.FC_final = nn.Linear(len(params)*2, len(params)*2)
             model.load_state_dict(torch.load(fmodel, map_location=torch.device(device)))
         print('Weights loaded')
-    
+
     data_batch = []
     for i, (x, y, _) in enumerate(test_loader):
         if i == 1:
@@ -299,9 +303,8 @@ def post_test_analysis(
     x = torch.vstack(data_batch)
     x = x.to(device)
 
-    mid_getter = MidGetter(model, return_layers={'LeakyReLU': 'LeakyReLU'}, keep_output=True)
-    mid_outputs = mid_getter(x)
-    print(len(mid_outputs[0]['LeakyReLU']))  # Will be 6.
+    mid_getter = MidGetter(model, return_layers=return_layers, keep_output=True)
+    # mid_outputs = mid_getter(x)
 
     data_batch = []
     for i, (x, y, _) in enumerate(test_loader):
@@ -310,13 +313,17 @@ def post_test_analysis(
     x = torch.vstack(data_batch)
     x = x.to(device)
 
+    # NOTE: All values of the return_layers must be the same and must point to the activation layer whose output is required.
+    # This code assumes that.
+    activation_layer_for_cka = list(return_layers.values())[0]
+
     with torch.no_grad():
-        mid_getter = MidGetter(model, return_layers={'LeakyReLU': 'LeakyReLU'}, keep_output=True)
+        mid_getter = MidGetter(model, return_layers=return_layers, keep_output=True)
         mid_outputs1 = mid_getter(x)
         mid_outputs2 = mid_getter(x)
 
-        intermediate_outputs_A = mid_outputs1[0]['LeakyReLU']
-        intermediate_outputs_B = mid_outputs2[0]['LeakyReLU']
+        intermediate_outputs_A = mid_outputs1[0][activation_layer_for_cka]
+        intermediate_outputs_B = mid_outputs2[0][activation_layer_for_cka]
 
         intermediate_outputs_A = [o.cpu() for o in intermediate_outputs_A]
         intermediate_outputs_B = [ob.cpu() for ob in intermediate_outputs_B]
