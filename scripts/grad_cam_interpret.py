@@ -54,7 +54,7 @@ class GradCAMRegressor:
         # Retrieve gradients and feature maps
         gradients = self.gradients  # Gradients of the target layer
         feature_maps = self.feature_maps  # Output of the target layer
-        
+
         print(f'Gradients shape: {gradients.shape}')
         print(f'Feature maps shape: {feature_maps.shape}')
 

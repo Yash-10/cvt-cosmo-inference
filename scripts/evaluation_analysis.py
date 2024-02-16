@@ -183,7 +183,7 @@ def post_test_analysis(
 
         counter += 1
 
-        if counter == 3:
+        if counter == 1:
             break
 
 
@@ -227,7 +227,7 @@ def post_test_analysis(
 
         counter += 1
 
-        if counter == 3:
+        if counter == 1:
             break
 
     # Now doing the same test as above, but testing the variance in estimates across simulations.
