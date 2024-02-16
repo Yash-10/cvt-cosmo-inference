@@ -73,7 +73,7 @@ def post_test_analysis(
     df = pd.DataFrame(np.hstack((np.expand_dims(filenames, 1), params_true, params_NN, errors_NN)))
     df.columns = ['filename'] + [f'params_true_{i}' for i in range(len(params))] + [f'params_NN_{i}' for i in range(len(params))] + [f'errors_NN_{i}' for i in range(len(params))]
     df.to_csv(test_results_filename)
-    
+
     params_true2 = []
     averaged_params_NN = []
     averaged_errors_NN = []

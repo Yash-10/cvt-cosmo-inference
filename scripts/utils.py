@@ -307,7 +307,7 @@ def smooth_3D_field(image, BoxSize=1000, R=50):
 import matplotlib.pyplot as plt
 def plot_results1(param_index, param_name, params_true, params_NN, errors_NN, minimum, maximum):
     """Plots all predictions for all maps of all simulations."""
-    fig=plt.figure(figsize=(7,7))
+    fig=plt.figure(figsize=(5,5))
     plt.xlabel(r'${\rm Truth}$')
     plt.ylabel(r'${\rm Inference}$')
     plt.title(param_name,fontsize=18)
@@ -319,7 +319,7 @@ def plot_results1(param_index, param_name, params_true, params_NN, errors_NN, mi
 
 def plot_results2(param_index, param_name, params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum):
     """Plots the average of predictions for all maps for one simulation, and does this for all simulations."""
-    fig=plt.figure(figsize=(7,7))
+    fig=plt.figure(figsize=(5,5))
     plt.xlabel(r'${\rm Truth}$')
     plt.ylabel(r'${\rm Inference}$')
     plt.title(param_name,fontsize=18)
@@ -331,7 +331,7 @@ def plot_results2(param_index, param_name, params_true2, averaged_params_NN, ave
 
 def plot_results3(param_index, param_name, params_true, params_NN, errors_NN, minimum, maximum):
     """Plots all predictions for all maps of all simulations."""
-    fig=plt.figure(figsize=(7,7))
+    fig=plt.figure(figsize=(5,5))
     plt.xlabel(r'${\rm Truth}$')
     plt.ylabel(r'${\rm Inference} - {\rm Truth}$')
 
@@ -346,7 +346,7 @@ def plot_results3(param_index, param_name, params_true, params_NN, errors_NN, mi
 
 def plot_std_sim(param_index, param_name, std_sim_NN, averaged_params_NN):
     """Plots the stddev of predictions for all maps for one simulation, and does this for all simulations."""
-    fig=plt.figure(figsize=(7,7))
+    fig=plt.figure(figsize=(5,5))
     plt.xlabel('Coefficient of variation of predictions')  # Coefficient of variation = std. dev / mean
     plt.ylabel('Counts')
     plt.title(param_name,fontsize=18)
