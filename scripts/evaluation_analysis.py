@@ -163,7 +163,7 @@ def post_test_analysis(
         print(f'Simulation {i}')
         param_index = 0
         assert len(df_subset[f'params_true_{param_index}'].unique()) == 1  # For a single simulation, there must be only a single true parameter value.
-        fig, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
         ax.scatter(values, preds[0])
         ax.set_xlabel('Mean density of 2D maps from a single simulation')
         ax.set_ylabel('Predicted parameter value')
@@ -173,7 +173,7 @@ def post_test_analysis(
 
         param_index = 4
         assert len(df_subset[f'params_true_{param_index}'].unique()) == 1  # For a single simulation, there must be only a single true parameter value.
-        fig, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
         ax.scatter(values, preds[1])  # Note [1] instead of [4] because preds contains only for Omega_m and sigma_8.
         ax.set_xlabel('Mean density of 2D maps from a single simulation')
         ax.set_ylabel('Predicted parameter value')
@@ -211,14 +211,14 @@ def post_test_analysis(
 
         print(f'Simulation {i}')
         print(len(values), covs[0].shape, covs[1].shape)
-        fig, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
         ax.scatter(values, covs[0])
         ax.set_xlabel('Mean density of 2D maps from a single simulation')
         ax.set_ylabel('Coefficient of variation')
         ax.set_title(r'$\Omega_m$')
         plt.show()
 
-        fig, ax = plt.subplots(1, 1)
+        fig, ax = plt.subplots(1, 1, figsize=(4, 4))
         ax.scatter(values, covs[1])  # Note [1] instead of [4] because cov contains only for Omega_m and sigma_8.
         ax.set_xlabel('Mean density of 2D maps from a single simulation')
         ax.set_ylabel('Coefficient of variation')
