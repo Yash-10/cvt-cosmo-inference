@@ -5,25 +5,29 @@ from torch.utils.data.dataset import Dataset
 import torch
 import torch.nn as nn
 
+# PyTorch Lightning
+import pytorch_lightning as pl
+from pytorch_lightning.callbacks import LearningRateMonitor, ModelCheckpoint
+
 class CustomImageDataset(Dataset):
-  def __init__(self, img_folder_path, normalized_cosmo_params_path, transform=None):
-    self.normalized_cosmo_params_path = normalized_cosmo_params_path
-    self.normalized_cosmo_params = pd.read_csv(self.normalized_cosmo_params_path)
-    self.img_folder_path = img_folder_path
-    self.transform = transform
+        def __init__(self, img_folder_path, normalized_cosmo_params_path, transform=None):
+                self.normalized_cosmo_params_path = normalized_cosmo_params_path
+                self.normalized_cosmo_params = pd.read_csv(self.normalized_cosmo_params_path)
+                self.img_folder_path = img_folder_path
+                self.transform = transform
 
-  def __len__(self):
-    return len(self.normalized_cosmo_params)
+        def __len__(self):
+                return len(self.normalized_cosmo_params)
 
-  def __getitem__(self, idx):
-    img_path = self.normalized_cosmo_params.iloc[idx, 1]
-    f = gzip.GzipFile(img_path, 'r')
-    image = np.load(f)
-    label = np.array(self.normalized_cosmo_params.iloc[idx, -5:], dtype=np.float32)
-    if self.transform:
-      image = self.transform(image)
-    image = np.expand_dims(image, 0)
-    return image, label, img_path
+        def __getitem__(self, idx):
+                img_path = self.normalized_cosmo_params.iloc[idx, 1]
+                f = gzip.GzipFile(img_path, 'r')
+                image = np.load(f)
+                label = np.array(self.normalized_cosmo_params.iloc[idx, -5:], dtype=np.float32)
+                if self.transform:
+                image = self.transform(image)
+                image = np.expand_dims(image, 0)
+                return image, label, img_path
 
 
 class model_o3_err(nn.Module):
@@ -128,3 +132,6 @@ class model_o3_err(nn.Module):
         y[:,5:10] = torch.square(x[:,5:10])
 
         return y
+
+
+############################ Below is for ViT ############################

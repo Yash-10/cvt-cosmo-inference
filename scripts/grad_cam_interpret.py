@@ -1,3 +1,4 @@
+import sys
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -23,6 +24,8 @@ class GradCAMRegressor:
             self.feature_maps = output
 
         def backward_hook(module, grad_input, grad_output):
+            # grad_output is a tuple with one entry, so we need to
+            # do grad_output[0] to get the tensor.
             self.gradients = grad_output[0]
 
         # Register hooks for both forward and backward passes
@@ -43,13 +46,17 @@ class GradCAMRegressor:
         model_output = self.model(input_tensor)[:, self.index]
 
         D = model_output - self.ground_truth_param_value
-        # d = 1 / D
+        # Handling a special case when the prediction is perfect (D = 0).
+        if D == 0.0:
+            D = D + sys.float_info.epsilon
 
         # Backward pass to compute gradients
+        # torch.ones_like(model_output) is optional. Same results are obtained if I omit this first argument.
+        # retain_graph=True is helpful when we want to perform multiple backward passes. Here I think it's only done once since the target_layer is fixed to a single layer.
         model_output.backward(torch.ones_like(model_output), retain_graph=True)
 
         # The approach is from https://arxiv.org/pdf/2304.08192.pdf
-        self.gradients *= -1 / (D**2)
+        self.gradients = self.gradients * -1 / (D**2)
 
         # Retrieve gradients and feature maps
         gradients = self.gradients  # Gradients of the target layer
@@ -79,7 +86,7 @@ class GradCAMRegressor:
 #         weights = F.adaptive_avg_pool2d(gradients, 1)
 #         cam = torch.sum(weights * feature_maps, dim=1, keepdim=True)
 #         cam = F.relu(cam)
-        
+
         if interpolate:
             cam = cam.unsqueeze(0).unsqueeze(0)
             # Resize Grad-CAM to match the input image size

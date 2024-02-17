@@ -330,7 +330,7 @@ def post_test_analysis(
 
         sim = get_CKA(n_layers=6, n_layers2=6, activations1=intermediate_outputs_A, activations2=intermediate_outputs_B)
 
-    fig, ax = plt.subplots(1, 1, figsize=(6, 6))
+    fig, ax = plt.subplots(1, 1, figsize=(4, 4))
     im = ax.imshow(sim, vmin=0, vmax=1)
     ax.axes.invert_yaxis()
 
