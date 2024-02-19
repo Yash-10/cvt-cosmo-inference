@@ -25,7 +25,7 @@ class CustomImageDataset(Dataset):
                 image = np.load(f)
                 label = np.array(self.normalized_cosmo_params.iloc[idx, -5:], dtype=np.float32)
                 if self.transform:
-                image = self.transform(image)
+                        image = self.transform(image)
                 image = np.expand_dims(image, 0)
                 return image, label, img_path
 
