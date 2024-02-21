@@ -14,10 +14,9 @@ import torch.nn as nn
 
 def post_test_analysis(
         params_true, params_NN, errors_NN, filenames,
-        test_loader, params, num_sims, MEAN, STD, MEAN_DENSITIES, minimum, maximum,
-        num_maps_per_projection_direction, hidden, dr, channels, fmodel,
-        device='cpu', test_results_filename='test_results.csv', cka_filename='cka_matrix_pretrained_CNN_grid64_test.png',
-        smallest_sim_number=0, additional_model_layer=False, model=None, return_layers={'LeakyReLU': 'LeakyReLU'}
+        params, num_sims, MEAN, STD, MEAN_DENSITIES, minimum, maximum,
+        num_maps_per_projection_direction, test_results_filename='test_results.csv',
+        smallest_sim_number=0
 ):
     """This function is designed to make it easier to run inference in multiple experiments for easier comparison.
 
@@ -49,8 +48,7 @@ def post_test_analysis(
     sns.set_style('whitegrid')
     sns.set_theme(style='ticks')
 
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-    from utils import plot_results1, plot_results2, plot_results3, plot_std_sim, get_CKA
+    from utils import plot_results1, plot_results2, plot_results3, plot_std_sim
 
     # Calculate chi-squared score. See https://iopscience.iop.org/article/10.3847/1538-4357/acac7a
     assert len(params_true) == len(params_NN)
@@ -275,24 +273,17 @@ def post_test_analysis(
     plot_std_sim(3, r'$n_s$', std_sim_NN, averaged_params_NN)
     plot_std_sim(4, r'$\sigma_8$', std_sim_NN, averaged_params_NN)
 
-    if model is None:
-        # A CNN model is assumed by default and is loaded.
-        # If the model is not a CNN (e.g., a ViT), then pass model through the `model` argument.
-        # Load model.
-        model = model_o3_err(hidden, dr, channels)
-        model.to(device=device)
+
+def get_cka(
+        model, test_loader, return_layers={'LeakyReLU': 'LeakyReLU'},
+        cka_filename='cka_matrix_pretrained_CNN_grid64_test.png',
+        device='cpu'
+    ):
+    from utils import get_CKA
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
 
     network_total_params = sum(p.numel() for p in model.parameters())
     print('total number of parameters in the model = %d'%network_total_params)
-
-    # load the weights in case they exists
-    if os.path.exists(fmodel):
-        if not additional_model_layer:
-            model.load_state_dict(torch.load(fmodel, map_location=torch.device(device)))
-        else:
-            model.FC_final = nn.Linear(len(params)*2, len(params)*2)
-            model.load_state_dict(torch.load(fmodel, map_location=torch.device(device)))
-        print('Weights loaded')
 
     data_batch = []
     for i, (x, y, _) in enumerate(test_loader):
