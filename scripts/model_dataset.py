@@ -86,8 +86,13 @@ class model_o3_err(nn.Module):
 
         self.P0  = nn.AvgPool2d(kernel_size=2, stride=2, padding=0)
 
-        self.FC1  = nn.Linear(32*hidden, 16*hidden)
-        self.FC2  = nn.Linear(16*hidden, 10)
+#         self.FC1  = nn.Linear(32*hidden, 16*hidden)
+#         self.FC2  = nn.Linear(16*hidden, 10)
+
+        self.mlp_head = nn.Sequential(
+            self.dropout(self.LeakyReLU(nn.Linear(32*hidden, 16*hidden))),
+            nn.Linear(16*hidden, 10)
+        )
 
         self.dropout   = nn.Dropout(p=dr)
         self.ReLU      = nn.ReLU()
@@ -124,8 +129,11 @@ class model_o3_err(nn.Module):
 
         x = x.view(image.shape[0], -1)
         x = self.dropout(x)
-        x = self.dropout(self.LeakyReLU(self.FC1(x)))
-        x = self.FC2(x)
+
+        # The MLP head implements the two commented lines below.
+        x = self.mlp_head(x)
+#         x = self.dropout(self.LeakyReLU(self.FC1(x)))
+#         x = self.FC2(x)
 
         # enforce the errors to be positive
         y = torch.clone(x)
