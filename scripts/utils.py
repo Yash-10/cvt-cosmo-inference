@@ -288,9 +288,9 @@ def power_spectrum(delta, BoxSize=1000, vel_field=False, dimensional=2, MAS='CIC
 
     return k2, Pk2
 
-import smoothing_library as SL
-
 def smooth_3D_field(image, BoxSize=1000, R=50):
+    import smoothing_library as SL
+
     field = image.astype(np.float32)
     grid    = field.shape[0]
     Filter  = 'Top-Hat'
