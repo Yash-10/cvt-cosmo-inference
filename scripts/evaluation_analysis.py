@@ -10,13 +10,13 @@ from utils import get_rmse_score, unprocess_a_map
 from model_dataset import model_o3_err
 from torch_intermediate_layer_getter import IntermediateLayerGetter as MidGetter
 import torch.nn as nn
-
+import wandb
 
 def post_test_analysis(
         params_true, params_NN, errors_NN, filenames,
         params, num_sims, MEAN, STD, MEAN_DENSITIES, minimum, maximum,
         num_maps_per_projection_direction, test_results_filename='test_results.csv',
-        smallest_sim_number=0
+        smallest_sim_number=0, WANDB_RUN_NAME='name'
 ):
     """This function is designed to make it easier to run inference in multiple experiments for easier comparison.
 
@@ -332,9 +332,11 @@ def get_cka(
 
     divider = make_axes_locatable(ax)
     cax = divider.append_axes('right', size='5%', pad=0.05)
-    fig.colorbar(im, cax=cax, orientation='vertical');
-    plt.savefig(cka_filename, bbox_inches='tight', dpi=200)
-    plt.show()
+    fig.colorbar(im, cax=cax, orientation='vertical')
+    wandb.log({f"CKA": wandb.Image(fig)})
+    plt.close()
+    # plt.savefig(cka_filename, bbox_inches='tight', dpi=200)
+    # plt.show()
 
 
 def gradcam_evaluation(test_loader, fmodel, hidden, dr, channels, device='cpu'):
