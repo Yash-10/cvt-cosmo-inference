@@ -64,16 +64,16 @@ if __name__ == "__main__":
         assert set(test_sim_numbers).isdisjoint(val_sim_numbers)
         assert set(train_sim_numbers).isdisjoint(val_sim_numbers)
 
-    if os.path.exists(os.path.join(os.base_dir, 'train')):
-        shutil.rmtree(os.path.join(os.base_dir, 'train'))
-    if os.path.exists(os.path.join(os.base_dir, 'test')):
-        shutil.rmtree(os.path.join(os.base_dir, 'test'))
-    if os.path.exists(os.path.join(os.base_dir, 'val')):
-        shutil.rmtree(os.path.join(os.base_dir, 'val'))
+    if os.path.exists(os.path.join(opt.base_dir, 'train')):
+        shutil.rmtree(os.path.join(opt.base_dir, 'train'))
+    if os.path.exists(os.path.join(opt.base_dir, 'test')):
+        shutil.rmtree(os.path.join(opt.base_dir, 'test'))
+    if os.path.exists(os.path.join(opt.base_dir, 'val')):
+        shutil.rmtree(os.path.join(opt.base_dir, 'val'))
 
-    os.mkdir(os.path.join(os.base_dir, 'test'))
-    os.mkdir(os.path.join(os.base_dir, 'train'))
-    os.mkdir(os.path.join(os.base_dir, 'val'))
+    os.mkdir(os.path.join(opt.base_dir, 'test'))
+    os.mkdir(os.path.join(opt.base_dir, 'train'))
+    os.mkdir(os.path.join(opt.base_dir, 'val'))
 
     # Calculate statistics across training set for normalization.
     den_arr = []
