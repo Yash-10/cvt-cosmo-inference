@@ -89,15 +89,17 @@ class model_o3_err(nn.Module):
 #         self.FC1  = nn.Linear(32*hidden, 16*hidden)
 #         self.FC2  = nn.Linear(16*hidden, 10)
 
-        self.mlp_head = nn.Sequential(
-            self.dropout(self.LeakyReLU(nn.Linear(32*hidden, 16*hidden))),
-            nn.Linear(16*hidden, 10)
-        )
-
         self.dropout   = nn.Dropout(p=dr)
         self.ReLU      = nn.ReLU()
         self.LeakyReLU = nn.LeakyReLU(0.2)
         self.tanh      = nn.Tanh()
+
+        self.mlp_head = nn.Sequential(
+                nn.Linear(32*hidden, 16*hidden),
+                self.LeakyReLU,
+                self.dropout,
+                nn.Linear(16*hidden, 10)
+        )
 
         for m in self.modules():
             if isinstance(m, nn.BatchNorm2d) or isinstance(m, nn.BatchNorm1d):
