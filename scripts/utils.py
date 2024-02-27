@@ -4,7 +4,6 @@ import glob
 import pandas as pd
 import h5py
 from sklearn.metrics import r2_score, mean_squared_error
-import Pk_library.Pk_library as PKL
 
 
 # Below two from https://stackoverflow.com/a/55945030
@@ -259,6 +258,8 @@ def get_rmse_score(params_true, params_NN):
 
 # Power spectrum
 def power_spectrum(delta, BoxSize=1000, vel_field=False, dimensional=2, MAS='CIC', axis=0):
+    import Pk_library.Pk_library as PKL
+
     """Calculates the 2D power spectrum of a 2D field. It internally calculates the contrast field and then calculates the power spectrum.
     For velocity fields, the field is kept as it is.
 
