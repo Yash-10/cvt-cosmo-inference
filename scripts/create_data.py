@@ -12,6 +12,7 @@ from utils import print_options, preprocess_a_map, read_hdf5, normalize_cosmo_pa
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Sets preprocessing options')
     parser.add_argument('--num_sims', type=int, default=1000, help='No. of simulations to use')
+    parser.add_argument('--base_dir', type=str, default='/kaggle/working', help='Base directory to help get absolute paths.')
     parser.add_argument('--smallest_sim_number', type=int, default=0, help='The smallest simulation number. The code assumes sequential simulation numbers: [smallest_sim_number, smallest_sim_number+1, smallest_sim_number+2, ..., smallest_sim_number + (num_sims - 1)]. If the sim numbers are not sequential, please assign sequential numbers and then use this script.')
     parser.add_argument('--grid_size', type=int, default=64, help='Grid size for the density fields that need to be procesed and saved.')
     parser.add_argument('--train_frac', type=float, default=0.8, help='The fraction of simulations to use for training.')
@@ -63,16 +64,16 @@ if __name__ == "__main__":
         assert set(test_sim_numbers).isdisjoint(val_sim_numbers)
         assert set(train_sim_numbers).isdisjoint(val_sim_numbers)
 
-    if os.path.exists('train'):
-        shutil.rmtree('train')
-    if os.path.exists('test'):
-        shutil.rmtree('test')
-    if os.path.exists('val'):
-        shutil.rmtree('val')
+    if os.path.exists(os.path.join(os.base_dir, 'train')):
+        shutil.rmtree(os.path.join(os.base_dir, 'train'))
+    if os.path.exists(os.path.join(os.base_dir, 'test')):
+        shutil.rmtree(os.path.join(os.base_dir, 'test'))
+    if os.path.exists(os.path.join(os.base_dir, 'val')):
+        shutil.rmtree(os.path.join(os.base_dir, 'val'))
 
-    os.mkdir('test')
-    os.mkdir('train')
-    os.mkdir('val')
+    os.mkdir(os.path.join(os.base_dir, 'test'))
+    os.mkdir(os.path.join(os.base_dir, 'train'))
+    os.mkdir(os.path.join(os.base_dir, 'val'))
 
     # Calculate statistics across training set for normalization.
     den_arr = []
@@ -112,13 +113,13 @@ if __name__ == "__main__":
     else:
         raise ValueError("One of min_vals/max_vals is specified but the other is not specified. Either specify both or don't specify both.")
 
-    train_param_file = os.path.join('train', 'train_normalized_cosmo_params_train.txt')
-    train_orig_param_file = os.path.join('train', 'train_orig_cosmo_params_train.txt')
-    test_param_file = os.path.join('test', 'test_normalized_cosmo_params_train.txt')
-    test_orig_param_file = os.path.join('test', 'test_orig_cosmo_params_train.txt')
+    train_param_file = os.path.join(opt.base_dir, 'train', 'train_normalized_cosmo_params_train.txt')
+    train_orig_param_file = os.path.join(opt.base_dir, 'train', 'train_orig_cosmo_params_train.txt')
+    test_param_file = os.path.join(opt.base_dir, 'test', 'test_normalized_cosmo_params_train.txt')
+    test_orig_param_file = os.path.join(opt.base_dir, 'test', 'test_orig_cosmo_params_train.txt')
     if val:
-        val_param_file = os.path.join('val', 'val_normalized_cosmo_params_train.txt')
-        val_orig_param_file = os.path.join('val', 'val_orig_cosmo_params_train.txt')
+        val_param_file = os.path.join(opt.base_dir, 'val', 'val_normalized_cosmo_params_train.txt')
+        val_orig_param_file = os.path.join(opt.base_dir, 'val', 'val_orig_cosmo_params_train.txt')
 
     if os.path.exists(train_param_file):
         os.remove(train_param_file)
@@ -180,9 +181,9 @@ if __name__ == "__main__":
 
         for j in slice_indices:
             if i in train_sim_numbers:
-                filename1 = os.path.join('train', f'processed_sim{i}_X{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
-                filename2 = os.path.join('train', f'processed_sim{i}_Y{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
-                filename3 = os.path.join('train', f'processed_sim{i}_Z{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                filename1 = os.path.join(opt.base_dir, 'train', f'processed_sim{i}_X{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                filename2 = os.path.join(opt.base_dir, 'train', f'processed_sim{i}_Y{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                filename3 = os.path.join(opt.base_dir, 'train', f'processed_sim{i}_Z{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
                 for fn in [filename1, filename2, filename3]:
                     train_param_data.append(np.insert(normalized_cosmo_params, 0, fn))
                     orig_train_param_data.append(np.insert(cosmo_params, 0, fn))
@@ -190,9 +191,9 @@ if __name__ == "__main__":
                 #     tr.write([fn, normalized_cosmo_params])
                 #     tro.write([fn, cosmo_params])
             elif i in test_sim_numbers:
-                filename1 = os.path.join('test', f'processed_sim{i}_X{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
-                filename2 = os.path.join('test', f'processed_sim{i}_Y{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
-                filename3 = os.path.join('test', f'processed_sim{i}_Z{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                filename1 = os.path.join(opt.base_dir, 'test', f'processed_sim{i}_X{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                filename2 = os.path.join(opt.base_dir, 'test', f'processed_sim{i}_Y{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                filename3 = os.path.join(opt.base_dir, 'test', f'processed_sim{i}_Z{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
                 for fn in [filename1, filename2, filename3]:
                     test_param_data.append(np.insert(normalized_cosmo_params, 0, fn))
                     orig_test_param_data.append(np.insert(cosmo_params, 0, fn))
@@ -201,9 +202,9 @@ if __name__ == "__main__":
                 #     teo.write([fn, cosmo_params])
             elif val:
                 if i in val_sim_numbers:
-                    filename1 = os.path.join('val', f'processed_sim{i}_X{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
-                    filename2 = os.path.join('val', f'processed_sim{i}_Y{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
-                    filename3 = os.path.join('val', f'processed_sim{i}_Z{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                    filename1 = os.path.join(opt.base_dir, 'val', f'processed_sim{i}_X{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                    filename2 = os.path.join(opt.base_dir, 'val', f'processed_sim{i}_Y{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
+                    filename3 = os.path.join(opt.base_dir, 'val', f'processed_sim{i}_Z{j}_LH_z0_grid{opt.grid_size}_masCIC.npy.gz')
                     for fn in [filename1, filename2, filename3]:
                         val_param_data.append(np.insert(normalized_cosmo_params, 0, fn))
                         orig_val_param_data.append(np.insert(cosmo_params, 0, fn))
@@ -234,21 +235,21 @@ if __name__ == "__main__":
         val_param_data = pd.DataFrame(val_param_data)
         orig_val_param_data = pd.DataFrame(orig_val_param_data)
 
-    train_param_data.to_csv(os.path.join('train', 'train_normalized_params.csv'))
-    orig_train_param_data.to_csv(os.path.join('train', 'train_original_params.csv'))
-    test_param_data.to_csv(os.path.join('test', 'test_normalized_params.csv'))
-    orig_test_param_data.to_csv(os.path.join('test', 'test_original_params.csv'))
+    train_param_data.to_csv(os.path.join(opt.base_dir, 'train', 'train_normalized_params.csv'))
+    orig_train_param_data.to_csv(os.path.join(opt.base_dir, 'train', 'train_original_params.csv'))
+    test_param_data.to_csv(os.path.join(opt.base_dir, 'test', 'test_normalized_params.csv'))
+    orig_test_param_data.to_csv(os.path.join(opt.base_dir, 'test', 'test_original_params.csv'))
     if val:
-        val_param_data.to_csv(os.path.join('val', 'val_normalized_params.csv'))
-        orig_val_param_data.to_csv(os.path.join('val', 'val_original_params.csv'))
+        val_param_data.to_csv(os.path.join(opt.base_dir, 'val', 'val_normalized_params.csv'))
+        orig_val_param_data.to_csv(os.path.join(opt.base_dir, 'val', 'val_original_params.csv'))
 
     print(f'Mean of log10(den) across the training set: {mean}')
     print(f'Std. dev of log10(den) across the training set: {std}')
     print(f'Min values of parameters across the training set: {min_vals}')
     print(f'Max values of parameters across the training set: {max_vals}')
 
-    np.save(f'{opt.prefix}_dataset_mean.npy', mean)
-    np.save(f'{opt.prefix}_dataset_std.npy', std)
-    np.save(f'{opt.prefix}_dataset_min_vals.npy', min_vals)
-    np.save(f'{opt.prefix}_dataset_max_vals.npy', max_vals)
-    np.save(f'{opt.prefix}_dataset_mean_densities.npy', mean_densities)
+    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_mean.npy', mean))
+    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_std.npy', std))
+    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_min_vals.npy', min_vals))
+    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_max_vals.npy', max_vals))
+    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_mean_densities.npy', mean_densities))
