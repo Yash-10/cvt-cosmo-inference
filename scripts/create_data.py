@@ -248,8 +248,8 @@ if __name__ == "__main__":
     print(f'Min values of parameters across the training set: {min_vals}')
     print(f'Max values of parameters across the training set: {max_vals}')
 
-    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_mean.npy', mean))
-    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_std.npy', std))
-    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_min_vals.npy', min_vals))
-    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_max_vals.npy', max_vals))
-    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_mean_densities.npy', mean_densities))
+    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_mean.npy'), mean)
+    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_std.npy'), std)
+    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_min_vals.npy'), min_vals)
+    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_max_vals.npy'), max_vals)
+    np.save(os.path.join(opt.base_dir, f'{opt.prefix}_dataset_mean_densities.npy'), mean_densities)
