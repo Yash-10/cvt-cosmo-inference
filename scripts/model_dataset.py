@@ -30,7 +30,7 @@ class CustomImageDataset(Dataset):
                 return image, label, img_path
 
 
-class model_o3_err(nn.Module):
+class model_o3_err(nn.Module): # TODO: This is not used in the notebooks currently.
     def __init__(self, hidden, dr, channels):
         super(model_o3_err, self).__init__()
 
@@ -99,6 +99,12 @@ class model_o3_err(nn.Module):
                 self.LeakyReLU,
                 self.dropout,
                 nn.Linear(16*hidden, 10)
+        )
+        self.mlp_head = nn.Sequential(
+                nn.Linear(32*hidden, 10),
+                # self.LeakyReLU,
+                # self.dropout,
+                # nn.Linear(16*hidden, 10)
         )
 
         for m in self.modules():

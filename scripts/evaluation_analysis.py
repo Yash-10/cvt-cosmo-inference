@@ -16,7 +16,7 @@ def post_test_analysis(
         params_true, params_NN, errors_NN, filenames,
         params, num_sims, MEAN, STD, MEAN_DENSITIES, minimum, maximum,
         num_maps_per_projection_direction, test_results_filename='test_results.csv',
-        smallest_sim_number=0, WANDB_RUN_NAME='name'
+        smallest_sim_number=0
 ):
     """This function is designed to make it easier to run inference in multiple experiments for easier comparison.
 
@@ -279,7 +279,7 @@ def post_test_analysis(
 def get_cka(
         model, test_loader, return_layers={'LeakyReLU': 'LeakyReLU'},
         cka_filename='cka_matrix_pretrained_CNN_grid64_test.png',
-        device='cpu'
+        device='cpu', n_layers=6
     ):
     from utils import get_CKA
     from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -321,7 +321,7 @@ def get_cka(
         intermediate_outputs_A = [o.cpu() for o in intermediate_outputs_A]
         intermediate_outputs_B = [ob.cpu() for ob in intermediate_outputs_B]
 
-        sim = get_CKA(n_layers=6, n_layers2=6, activations1=intermediate_outputs_A, activations2=intermediate_outputs_B)
+        sim = get_CKA(n_layers=n_layers, n_layers2=n_layers, activations1=intermediate_outputs_A, activations2=intermediate_outputs_B)
 
     fig, ax = plt.subplots(1, 1, figsize=(4, 4))
     im = ax.imshow(sim, vmin=0, vmax=1)
