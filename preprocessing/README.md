@@ -1,0 +1,1 @@
+As the data access page says here: https://quijote-simulations.readthedocs.io/en/latest/access.html, some data may be temporarily unavailable. So the paths in the `create_density_fields.ipynb` notebook may not exist now, at least that's what I found. For example, I don't know where can I find the `latin_hypercube` folder, although I could find others.
