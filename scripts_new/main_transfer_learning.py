@@ -85,9 +85,9 @@ wd = extract_model_params(filename, 'wd')
 # and files of the format "halos_sim1003_LH_z0_grid64_masCIC.h5" inside this folder.
 halo_dirname = './'
 
-ANALYSE_BIAS_NOW = False
+# ANALYSE_BIAS_NOW = False
 SAME_SIMS = True  # Whether the halo and DM density simulations exactly match.
-if ANALYSE_BIAS_NOW and SAME_SIMS:
+if SAME_SIMS:
     # Analysis of the bias parameter
     import glob
     from utils import read_hdf5
