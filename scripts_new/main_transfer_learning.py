@@ -68,6 +68,7 @@ dr         = 0.2
 
 num_maps_per_projection_direction = 10
 num_sims = 2000
+starting_sim_number = 1000
 
 ## Load pretrained paramters
 model_name = "ViT"
@@ -171,7 +172,7 @@ if CREATE_DATASET_NOW:
         command = [
             'python', 'create_data.py', '--num_sims', f'{num_sims}', '--train_frac', '0.8', '--test_frac', '0.1', '--seed', '42', '--path', f'{halo_dirname}/my_outputs_halo', '--grid_size', '256',
             '--num_maps_per_projection_direction', f'{num_maps_per_projection_direction}', '--prefix', prefix, '--dataset_name', '3D_halo_distribution',
-            '--smallest_sim_number', '1000', '--log_1_plus'
+            '--smallest_sim_number', f'{starting_sim_number}', '--log_1_plus'
         ]
         #         --precomputed_mean {MEAN} --precomputed_stddev {STD} \
         #         --precomputed_min_vals {MIN_VALS[0]} {MIN_VALS[1]} {MIN_VALS[2]} {MIN_VALS[3]} {MIN_VALS[4]} \
@@ -295,5 +296,5 @@ post_test_analysis(
     params, num_sims, MEAN, STD, MEAN_DENSITIES, minimum, maximum,
     num_maps_per_projection_direction,
     test_results_filename=f'test_results_transfer_learning_ViT_epoch{epochs}_freeze{FREEZE_LAYERS}.csv',
-    smallest_sim_number=0 if SAME_SIMS else 1000
+    smallest_sim_number=0 if SAME_SIMS else starting_sim_number
 )
