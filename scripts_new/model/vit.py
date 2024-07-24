@@ -307,11 +307,11 @@ class ViT_FineTune_CvT(ViT):
         # Even if freeze_layers=True, we re-initialize the `to_logits` head (all other layers are kept frozen if freeze_layers=True).
         # See, for example, https://pyimagesearch.com/2019/06/03/fine-tuning-with-keras-and-deep-learning/
         # NOTE: This reinitialization must come after `freeze_layers`, otherwise the reinitialized layer will again become frozen.
-        self.model.model.to_logits = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
-            Rearrange('... () () -> ...'),
-            nn.Linear(model_kwargs['num_channels'], model_kwargs['num_classes'])
-        )
+        #self.model.model.to_logits = nn.Sequential(
+        #    nn.AdaptiveAvgPool2d(1),
+        #    Rearrange('... () () -> ...'),
+        #    nn.Linear(model_kwargs['num_channels'], model_kwargs['num_classes'])
+        #)
  
     def configure_optimizers(self):
         to_logits_params = list(map(lambda x: x[1],list(filter(lambda kv: 'model.to_logits' in kv[0], self.model.named_parameters()))))
