@@ -307,10 +307,11 @@ class ViT_FineTune_CvT(ViT):
         # Even if freeze_layers=True, we re-initialize the `to_logits` head (all other layers are kept frozen if freeze_layers=True).
         # See, for example, https://pyimagesearch.com/2019/06/03/fine-tuning-with-keras-and-deep-learning/
         # NOTE: This reinitialization must come after `freeze_layers`, otherwise the reinitialized layer will again become frozen.
+        s3_emb_dim = self.model.model.layers[-1][0].out_channels  # hacky way to get the value of s3_emb_dim.
         self.model.model.to_logits = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
             Rearrange('... () () -> ...'),
-            nn.Linear(model_kwargs['num_channels'], model_kwargs['num_classes'])
+            nn.Linear(s3_emb_dim, model_kwargs['num_classes'])
         )
  
     def configure_optimizers(self):
