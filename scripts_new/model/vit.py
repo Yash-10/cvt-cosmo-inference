@@ -17,6 +17,8 @@ import torch.optim as optim
 from utils import get_rmse_score
 from model.cnn import model_o3_err
 
+from einops.layers.torch import Rearrange
+
 
 params          = [0,1,2,3,4]    #Omega_m, Omega_b, h, n_s, sigma_8. The code will be trained to predict all these parameters.
 g               = params           #g will contain the mean of the posterior
@@ -220,10 +222,23 @@ class ViT_FineTune(ViT):
         super().__init__(model_kwargs=model_kwargs, lr=lr, wd=wd, beta1=beta1, beta2=beta2, minimum=minimum, maximum=maximum)
         self.save_hyperparameters()
 
-        self.model = ViT.load_from_checkpoint(PRETRAINED_FILENAME, model_kwargs, lr=lr, wd=wd, beta1=beta1, beta2=beta2, minimum=minimum, maximum=maximum)
+        self.model = ViT.load_from_checkpoint(
+            PRETRAINED_FILENAME, model_kwargs, lr=lr, wd=wd, beta1=beta1, beta2=beta2, minimum=minimum, maximum=maximum
+        )
 
-        # Re-initialize the MLP head.
+        if freeze_layers:
+            # Freeze the parameters
+            for param in self.model.model.parameters():
+                param.requires_grad = False
+
+            # Assign new Linear layer to the patch embedding layer
+            patch_dim = model_kwargs['patch_size'] ** 2
+            dim = model_kwargs['hidden_dim']
+            self.model.model.to_patch_embedding[2] = nn.Linear(patch_dim, dim)
+
+        # Even if freeze_layers=True, we re-initialize the MLP head.
         # See, for example, https://pyimagesearch.com/2019/06/03/fine-tuning-with-keras-and-deep-learning/
+        # NOTE: This reinitialization must come after `freeze_layers`, otherwise the reinitialized layer will again become frozen.
         self.model.model.mlp_head = nn.Sequential(
             nn.LayerNorm(model_kwargs['embed_dim']),
             nn.Linear(model_kwargs['embed_dim'], model_kwargs['num_classes'])
@@ -241,16 +256,6 @@ class ViT_FineTune(ViT):
 #         )
 
         #self.example_input_array = next(iter(train_loader))[0]
-
-        if freeze_layers:
-            # Freeze the parameters
-            for param in self.model.model.parameters():
-                param.requires_grad = False
-
-            # Assign new Linear layer to the patch embedding layer
-            patch_dim = model_kwargs['patch_size'] ** 2
-            dim = model_kwargs['hidden_dim']
-            self.model.model.to_patch_embedding[2] = nn.Linear(patch_dim, dim)
  
     def configure_optimizers(self):
         mlp_head_params = list(map(lambda x: x[1],list(filter(lambda kv: 'model.mlp_head' in kv[0], self.model.named_parameters()))))
@@ -274,6 +279,53 @@ class ViT_FineTune(ViT):
 #             ],
 #             weight_decay=self.hparams.wd, betas=(self.hparams.beta1, self.hparams.beta2)
 #         )
+        lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.3, patience=5)
+
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": lr_scheduler,
+                "monitor": "val_loss"
+            },
+        }
+
+
+class CvT_FineTune(ViT):
+    def __init__(self, PRETRAINED_FILENAME, model_kwargs, lr, wd, beta1, beta2, minimum, maximum, freeze_layers=False):
+        super().__init__(model_kwargs=model_kwargs, lr=lr, wd=wd, beta1=beta1, beta2=beta2, minimum=minimum, maximum=maximum)
+        self.save_hyperparameters()
+
+        self.model = ViT.load_from_checkpoint(
+            PRETRAINED_FILENAME, model_kwargs, lr=lr, wd=wd, beta1=beta1, beta2=beta2, minimum=minimum, maximum=maximum
+        )
+
+        if freeze_layers:
+            # Freeze the parameters
+            for param in self.model.model.parameters():
+                param.requires_grad = False
+
+        # Even if freeze_layers=True, we re-initialize the `to_logits` head (all other layers are kept frozen if freeze_layers=True).
+        # See, for example, https://pyimagesearch.com/2019/06/03/fine-tuning-with-keras-and-deep-learning/
+        # NOTE: This reinitialization must come after `freeze_layers`, otherwise the reinitialized layer will again become frozen.
+        self.model.model.to_logits = nn.Sequential(
+            nn.AdaptiveAvgPool2d(1),
+            Rearrange('... () () -> ...'),
+            nn.Linear(model_kwargs['num_channels'], model_kwargs['num_classes'])
+        )
+ 
+    def configure_optimizers(self):
+        to_logits_params = list(map(lambda x: x[1],list(filter(lambda kv: 'model.to_logits' in kv[0], self.model.named_parameters()))))
+        feature_params = list(map(lambda x: x[1],list(filter(lambda kv: 'model.to_logits' not in kv[0], self.model.named_parameters()))))
+        assert len(to_logits_params) > 0  # Because we know there exists a MLP head in our model.
+        assert len(feature_params) > 0  # Because we know there exists parameters corresponding to the transformer and input layers.
+        optimizer = torch.optim.AdamW(
+            [
+                {'params': to_logits_params, 'lr': 1e-2},
+                {'params': feature_params, 'lr': 1e-4}
+            ],
+            weight_decay=self.hparams.wd, betas=(self.hparams.beta1, self.hparams.beta2)
+        )
+
         lr_scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=0.3, patience=5)
 
         return {
