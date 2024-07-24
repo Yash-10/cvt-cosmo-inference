@@ -384,6 +384,7 @@ def plot_results1(param_index, param_name, params_true, params_NN, errors_NN, mi
     ax.errorbar(params_true[:,param_index], params_NN[:,param_index], errors_NN[:,param_index],
                 linestyle='None', lw=1, fmt='o', ms=2, elinewidth=1, capsize=0, c='gray')
     ax.plot([minimum[param_index],maximum[param_index]], [minimum[param_index],maximum[param_index]], color='k')
+    plt.savefig(f"plot_results1_{param_name}.pdf", format='pdf')
     wandb.log({f"plot_results1_{param_name}": wandb.Image(fig)})
     plt.close()
     # plt.show()
@@ -398,6 +399,7 @@ def plot_results2(param_index, param_name, params_true2, averaged_params_NN, ave
     ax.errorbar(params_true2[:,param_index], averaged_params_NN[:,param_index], averaged_errors_NN[:,param_index],
                 linestyle='None', lw=1, fmt='o', ms=2, elinewidth=1, capsize=0, c='gray')
     ax.plot([minimum[param_index],maximum[param_index]], [minimum[param_index],maximum[param_index]], color='k')
+    plt.savefig(f"plot_results2_{param_name}.pdf", format='pdf')
     wandb.log({f"plot_results2_{param_name}": wandb.Image(fig)})
     plt.close()
     # plt.show()
@@ -415,6 +417,7 @@ def plot_results3(param_index, param_name, params_true, params_NN, errors_NN, mi
     ax.errorbar(params_true[:,param_index], params_NN[:,param_index]-params_true[:,param_index], errors_NN[:,param_index],
                 linestyle='None', lw=1, fmt='o', ms=2, elinewidth=1, capsize=0, c='gray')
     # plt.plot([minimum[param_index],maximum[param_index]], [minimum[param_index],maximum[param_index]], color='k')
+    plt.savefig(f"plot_results3_{param_name}.pdf", format='pdf')
     wandb.log({f"plot_results3_{param_name}": wandb.Image(fig)})
     plt.close()
     #plt.show()
@@ -427,6 +430,7 @@ def plot_std_sim(param_index, param_name, std_sim_NN, averaged_params_NN):
     ax.set_title(param_name,fontsize=18)
 
     ax.hist(std_sim_NN[:, param_index]/averaged_params_NN[:,param_index], color='gray')
+    plt.savefig(f"plot_std_sim_{param_name}.pdf", format='pdf')
     wandb.log({f"plot_std_sim_{param_name}": wandb.Image(fig)})
     plt.close()
     # plt.show()
