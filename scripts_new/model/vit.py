@@ -290,7 +290,7 @@ class ViT_FineTune(ViT):
         }
 
 
-class CvT_FineTune(ViT):
+class ViT_FineTune_CvT(ViT):
     def __init__(self, PRETRAINED_FILENAME, model_kwargs, lr, wd, beta1, beta2, minimum, maximum, freeze_layers=False):
         super().__init__(model_kwargs=model_kwargs, lr=lr, wd=wd, beta1=beta1, beta2=beta2, minimum=minimum, maximum=maximum)
         self.save_hyperparameters()
