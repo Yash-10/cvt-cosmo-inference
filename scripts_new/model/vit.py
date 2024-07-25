@@ -139,7 +139,7 @@ class ViT(pl.LightningModule):
 
             # Also log RMSE and sigma_bar for all parameters.
             rmse = get_rmse_score(y, y_NN)
-            sigma_bar = np.mean(y_NN, axis=0)
+            sigma_bar = np.mean(e_NN, axis=0)
             # Only log at the end of epoch instead of each step.
             # Logging is only done for Omega_m and sigma_8 since only these are interesting for DM density/DM halo fields.
             # But more can easily be added here if and when needed.
