@@ -12,7 +12,12 @@ from utils import get_rmse_score
 
 from einops.layers.torch import Rearrange
 
-params          = [0,1,2,3,4]    #Omega_m, Omega_b, h, n_s, sigma_8. The code will be trained to predict all these parameters.
+import yaml
+with open("config.yaml", "r") as file:
+    config = yaml.safe_load(file)
+
+params = config['params']
+#params          = [0,1,2,3,4]    #Omega_m, Omega_b, h, n_s, sigma_8. The code will be trained to predict all these parameters.
 g               = params           #g will contain the mean of the posterior
 h               = [5+i for i in g] #h will contain the variance of the posterior
 
@@ -183,6 +188,8 @@ class CNN(pl.LightningModule):
         batch_size = x.shape[0]
 
         p = self.model(x)
+        
+        y = y[:,g]                #true values
         y_NN = p[:,g]             #posterior mean
         e_NN = p[:,h]             #posterior std
 
