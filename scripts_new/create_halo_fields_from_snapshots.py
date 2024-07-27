@@ -19,12 +19,12 @@ import subprocess
 # CONSTANTS
 NUM_SIMS = 2000  # Can be any integer <= 2000.
 BASE_PATH = './halos'
-OUTPUT_DIR = './my_outputs_halo/'
+OUTPUT_DIR = './my_outputs_halo_128/'
 
 if not os.path.exists(OUTPUT_DIR):
     os.mkdir(OUTPUT_DIR)
 
-grid     = 256    #the density field will have grid^3 voxels
+grid     = 128    #the density field will have grid^3 voxels
 MAS      = 'CIC'  #Mass-assignment scheme:'NGP', 'CIC', 'TSC', 'PCS'
 verbose  = True   #whether to print information about the progress
 ptype    = [1]    #[1](CDM), [2](neutrinos) or [1,2](CDM+neutrinos)

@@ -80,7 +80,7 @@ if __name__ == "__main__":
     cosmo_arr = []
     for i in range(opt.smallest_sim_number, opt.smallest_sim_number+opt.num_sims):
         if i in train_sim_numbers:  # We want to calculate statistics only using the training set.
-            suffix = f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if opt.prefix == '' else f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
+            suffix = f'halos_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if 'halo' in opt.prefix else f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
             print(f"# reading {suffix} to compute statistics...")
             density, cosmo_params = read_hdf5(os.path.join(opt.path, suffix), dtype=dtype, dataset_name=opt.dataset_name)
             # Calculate the overdensity field: 1 + delta.
@@ -155,7 +155,7 @@ if __name__ == "__main__":
 
     mean_densities = []  # Order is sim0, sim1, sim2, ...., sim999, for example.
     for i in range(opt.smallest_sim_number, opt.smallest_sim_number+opt.num_sims):
-        suffix = f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if opt.prefix == '' else f'{opt.prefix}_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
+        suffix = f'halos_sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5' if 'halo' in opt.prefix else f'sim{i}_LH_z0_grid{opt.grid_size}_masCIC.h5'
         print(f"# reading {suffix}...")
         density, cosmo_params = read_hdf5(os.path.join(opt.path, suffix), dtype=dtype, dataset_name=opt.dataset_name)
         mean_densities.append(np.mean(density))

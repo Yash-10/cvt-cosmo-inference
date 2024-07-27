@@ -1,6 +1,4 @@
 import os
-import glob
-import gzip
 import torch
 import numpy as np
 import pandas as pd
@@ -10,7 +8,169 @@ from utils import get_rmse_score, unprocess_a_map
 from model.cnn import model_o3_err
 from torch_intermediate_layer_getter import IntermediateLayerGetter as MidGetter
 import torch.nn as nn
+
+import matplotlib.pyplot as plt
 import wandb
+
+def plot_results1(param_index, param_name, params_true, params_NN, errors_NN, minimum, maximum):
+    """Plots all predictions for all maps of all simulations."""
+    fig, ax = plt.subplots(figsize=(5,5))
+    ax.set_xlabel(r'${\rm Truth}$')
+    ax.set_ylabel(r'${\rm Inference}$')
+    ax.set_title(param_name,fontsize=18)
+
+    ax.errorbar(params_true[:,param_index], params_NN[:,param_index], errors_NN[:,param_index],
+                linestyle='None', lw=1, fmt='o', ms=2, elinewidth=1, capsize=0, c='gray')
+    ax.plot([minimum[param_index],maximum[param_index]], [minimum[param_index],maximum[param_index]], color='k')
+    plt.savefig(f"plot_results1_{param_name}.pdf", format='pdf')
+    wandb.log({f"plot_results1_{param_name}": wandb.Image(fig)})
+    plt.close()
+    # plt.show()
+
+def plot_results2(param_index, param_name, params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum):
+    """Plots the average of predictions for all maps for one simulation, and does this for all simulations."""
+    fig, ax = plt.subplots(figsize=(5,5))
+    ax.set_xlabel(r'${\rm Truth}$')
+    ax.set_ylabel(r'${\rm Inference}$')
+    ax.set_title(param_name,fontsize=18)
+
+    ax.errorbar(params_true2[:,param_index], averaged_params_NN[:,param_index], averaged_errors_NN[:,param_index],
+                linestyle='None', lw=1, fmt='o', ms=2, elinewidth=1, capsize=0, c='gray')
+    ax.plot([minimum[param_index],maximum[param_index]], [minimum[param_index],maximum[param_index]], color='k')
+    plt.savefig(f"plot_results2_{param_name}.pdf", format='pdf')
+    wandb.log({f"plot_results2_{param_name}": wandb.Image(fig)})
+    plt.close()
+    # plt.show()
+
+def plot_results3(param_index, param_name, params_true, params_NN, errors_NN, minimum, maximum):
+    """Plots all predictions for all maps of all simulations."""
+    fig, ax = plt.subplots(figsize=(5,5))
+    ax.set_xlabel(r'${\rm Truth}$')
+    ax.set_ylabel(r'${\rm Inference} - {\rm Truth}$')
+
+    accuracy = np.mean(errors_NN[:,param_index] / params_NN[:,param_index])
+
+    #ax.set_title(param_name + ': ' + rf'$<\delta\theta/\theta> = {accuracy*100:.2f}%$',fontsize=18)
+
+    ax.errorbar(params_true[:,param_index], params_NN[:,param_index]-params_true[:,param_index], errors_NN[:,param_index],
+                linestyle='None', lw=1, fmt='o', ms=2, elinewidth=1, capsize=0, c='gray')
+    # plt.plot([minimum[param_index],maximum[param_index]], [minimum[param_index],maximum[param_index]], color='k')
+    plt.savefig(f"plot_results3_{param_name}.pdf", format='pdf')
+    wandb.log({f"plot_results3_{param_name}": wandb.Image(fig)})
+    plt.close()
+    #plt.show()
+
+def plot_std_sim(param_index, param_name, std_sim_NN, averaged_params_NN):
+    """Plots the stddev of predictions for all maps for one simulation, and does this for all simulations."""
+    fig, ax = plt.subplots(figsize=(5,5))
+    ax.set_xlabel('Coefficient of variation of predictions')  # Coefficient of variation = std. dev / mean
+    ax.set_ylabel('Counts')
+    ax.set_title(param_name,fontsize=18)
+
+    ax.hist(std_sim_NN[:, param_index]/averaged_params_NN[:,param_index], color='gray')
+    plt.savefig(f"plot_std_sim_{param_name}.pdf", format='pdf')
+    wandb.log({f"plot_std_sim_{param_name}": wandb.Image(fig)})
+    plt.close()
+    # plt.show()
+
+# This function makes all final analysis plot in a single function for ease of use.
+def post_testing_analysis(df, params_true, params_NN, errors_NN, minimum, maximum, num_maps_per_projection_direction=10, num_sims=1000, params=[0,1,2,3,4]):
+    params_true2 = []
+    averaged_params_NN = []
+    averaged_errors_NN = []
+    std_sim_NN = []
+
+    for i in range(num_sims):  # 1000 simulations.
+        df_subset = df[df['filename'].str.contains(f'_sim{i}_')]
+
+        if df_subset.empty:  # This simulation was not in the test set
+            continue
+
+        p = [np.mean(df_subset[f'params_NN_{j}']) for j in range(len(params))]
+        e = [np.mean(df_subset[f'errors_NN_{j}']) for j in range(len(params))]
+
+        # Standard deviation of all point estimates for a single simulation.
+        p_std = [np.std(df_subset[f'params_NN_{j}']) for j in range(len(params))]
+
+        averaged_params_NN.append(p)
+        averaged_errors_NN.append(e)
+        std_sim_NN.append(p_std)
+        params_true2.append(df_subset.iloc[0][[f'params_true_{k}' for k in range(len(params))]].tolist())
+
+    params_true2 = np.vstack(params_true2)
+    averaged_params_NN = np.vstack(averaged_params_NN)
+    averaged_errors_NN = np.vstack(averaged_errors_NN)
+    std_sim_NN = np.vstack(std_sim_NN)
+
+    print(params_true2.shape, averaged_params_NN.shape, averaged_errors_NN.shape)
+
+    # Make plots
+    plot_results1(0, r'$\Omega_{\rm m}$', params_true, params_NN, errors_NN, minimum, maximum)
+    plot_results1(1, r'$\Omega_{\rm b}$', params_true, params_NN, errors_NN, minimum, maximum)
+    plot_results1(2, r'$h$', params_true, params_NN, errors_NN, minimum, maximum)
+    plot_results1(3, r'$n_s$', params_true, params_NN, errors_NN, minimum, maximum)
+    plot_results1(4, r'$\sigma_8$', params_true, params_NN, errors_NN, minimum, maximum)
+
+    plot_results2(0, r'$\Omega_{\rm m}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(1, r'$\Omega_{\rm b}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(2, r'$h$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(3, r'$n_s$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+    plot_results2(4, r'$\sigma_8$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+
+    plot_std_sim(0, r'$\Omega_{\rm m}$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(1, r'$\Omega_{\rm b}$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(2, r'$h$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(3, r'$n_s$', std_sim_NN, averaged_params_NN)
+    plot_std_sim(4, r'$\sigma_8$', std_sim_NN, averaged_params_NN)
+
+    ################# COMMENTING THE BELOW TO PREVENT SAVING MANY IMAGES #################
+    # # Now we plot the coefficient of variation across simulations.
+    # # For a given 2D map and it's position in the 3D cube, we collate the predictions across simulations and plot the std dev.
+    # params_true2 = []
+    # averaged_params_NN = []
+    # averaged_errors_NN = []
+    # std_sim_NN = []
+    # counter = 0
+
+    # for i in range(num_maps_per_projection_direction*3):  # Total no. of 2d maps from a single 3d cube.
+    #     for direction in ['X', 'Y', 'Z']:
+    #         df_subset = df[df['filename'].str.contains(f'_{direction}{i}_')]
+
+    #         if df_subset.empty:  # This 2d map was not in the test set for any test simulation.
+    #             continue
+
+    #         p = [np.mean(df_subset[f'params_NN_{j}']) for j in range(len(params))]
+    #         e = [np.mean(df_subset[f'errors_NN_{j}']) for j in range(len(params))]
+
+    #         for ss in range(len(params)):
+    #             # Each value must be from a different simulation, so no overlap must be there.
+    #             assert np.unique(df_subset[f'params_true_{ss}']).shape == df_subset[f'params_true_{ss}'].shape
+
+    #         # Standard deviation of all point estimates for a single simulation.
+    #         p_std = [np.std(df_subset[f'params_NN_{j}']) for j in range(len(params))]
+
+    #         averaged_params_NN.append(p)
+    #         averaged_errors_NN.append(e)
+    #         std_sim_NN.append(p_std)
+    #         params_true2.append(df_subset.iloc[0][[f'params_true_{k}' for k in range(len(params))]].tolist())
+    #         counter += 1
+
+    # assert counter == (num_maps_per_projection_direction * 3) * 3
+
+    # params_true2 = np.vstack(params_true2)
+    # averaged_params_NN = np.vstack(averaged_params_NN)
+    # averaged_errors_NN = np.vstack(averaged_errors_NN)
+    # std_sim_NN = np.vstack(std_sim_NN)
+
+    # # We use the same function as the above test in the above cell, but here the variables themselves are changed.
+    # NOTE: If you are using wandb, simly uncommenting the below may overwrite the images saved in `plot_std_sim` from above.
+    # plot_std_sim(0, r'$\Omega_{\rm m}$', std_sim_NN, averaged_params_NN)
+    # plot_std_sim(1, r'$\Omega_{\rm b}$', std_sim_NN, averaged_params_NN)
+    # plot_std_sim(2, r'$h$', std_sim_NN, averaged_params_NN)
+    # plot_std_sim(3, r'$n_s$', std_sim_NN, averaged_params_NN)
+    # plot_std_sim(4, r'$\sigma_8$', std_sim_NN, averaged_params_NN)
+
+    #####################################################################################
 
 def post_test_analysis(
         params_true, params_NN, errors_NN, filenames,
@@ -48,8 +208,6 @@ def post_test_analysis(
     sns.set_style('whitegrid')
     sns.set_theme(style='ticks')
 
-    from utils import plot_results1, plot_results2, plot_results3, plot_std_sim
-
     # Calculate chi-squared score. See https://iopscience.iop.org/article/10.3847/1538-4357/acac7a
     assert len(params_true) == len(params_NN)
     def get_chi_square_score(params_true, params_NN, param_index):
@@ -61,11 +219,9 @@ def post_test_analysis(
         return chi_square_score
 
     print('Chi-squared scores')
-    print('Omega_m', get_chi_square_score(params_true, params_NN, 0))
-    print('Omega_b', get_chi_square_score(params_true, params_NN, 1))
-    print('h', get_chi_square_score(params_true, params_NN, 2))
-    print('n_s', get_chi_square_score(params_true, params_NN, 3))
-    print('sigma_8', get_chi_square_score(params_true, params_NN, 4))
+    name_list = ['Omega_m', 'Omega_b', 'h', 'n_s', 'sigma_8']
+    for count, i in enumerate(params):
+        print(f'{name_list[i]}:', get_chi_square_score(params_true, params_NN, count))
 
     # Create a dataframe of results
     df = pd.DataFrame(np.hstack((np.expand_dims(filenames, 1), params_true, params_NN, errors_NN)))
@@ -101,38 +257,42 @@ def post_test_analysis(
 
     rmse_score = get_rmse_score(params_true, params_NN)
     sigma_bar = np.mean(errors_NN, axis=0)
-    plot_results1(0, r'$\Omega_{\rm m}: $' + f'RMSE = {rmse_score[0]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar[0]:.3f}$', params_true, params_NN, errors_NN, minimum, maximum)
-    plot_results1(1, r'$\Omega_{\rm b}: $' + f'RMSE = {rmse_score[1]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar[1]:.3f}$', params_true, params_NN, errors_NN, minimum, maximum)
-    plot_results1(2, r'$h: $' + f'RMSE = {rmse_score[2]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar[2]:.3f}$', params_true, params_NN, errors_NN, minimum, maximum)
-    plot_results1(3, r'$n_s: $' + f'RMSE = {rmse_score[3]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar[3]:.3f}$', params_true, params_NN, errors_NN, minimum, maximum)
-    plot_results1(4, r'$\sigma_8: $' + f'RMSE = {rmse_score[4]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar[4]:.3f}$', params_true, params_NN, errors_NN, minimum, maximum)
+    rmse_score2 = get_rmse_score(params_true2, averaged_params_NN)
+    sigma_bar2 = np.mean(averaged_errors_NN, axis=0)
 
+    for count, i in enumerate(params):
+        if i == 0:
+            label0 = r'$\Omega_{\rm m}$'
+        elif i == 1:
+            label0 = r'$\Omega_{\rm b}$'
+        elif i == 2:
+            label0 = r'$h$'
+        elif i == 3:
+            label0 = r'$n_s$'
+        elif i == 4:
+            label0 = r'$\sigma_8$'
+
+        label = label0 + f'RMSE = {rmse_score[count]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar[count]:.3f}$'
+
+        plot_results1(count, label, params_true, params_NN, errors_NN, minimum, maximum)
+        plot_results3(count, label0, params_true, params_NN, errors_NN, minimum, maximum)
+
+        label = label0 +  f': RMSE = {rmse_score2[count]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar2[count]:.3f}$'
+        plot_results2(count, label, params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
+
+        plot_std_sim(count, label0, std_sim_NN, averaged_params_NN)
+
+        if i == 0:
+            print(f'Median COV for Omega_m: {np.median(std_sim_NN[:, count]/averaged_params_NN[:, count])}')
+        if i == 4:
+            print(f'Median COV for sigma_8: {np.median(std_sim_NN[:, count]/averaged_params_NN[:, count])}')
+        
     # This plots the predicted error on the parameter / predicted value of the parameter.
     # This can be used to mention the constraining accuracy: see Fig. 3 of https://arxiv.org/pdf/2109.09747.pdf
     # NOTE: One small caveat here is that this plot includes multiple maps from the same simulation, so the intrinsic differences in the error and parameter value will also be present here.
-    plot_results3(0, r'$\Omega_{\rm m}$', params_true, params_NN, errors_NN, minimum, maximum)
-    plot_results3(1, r'$\Omega_{\rm b}$', params_true, params_NN, errors_NN, minimum, maximum)
-    plot_results3(2, r'$h$', params_true, params_NN, errors_NN, minimum, maximum)
-    plot_results3(3, r'$n_s$', params_true, params_NN, errors_NN, minimum, maximum)
-    plot_results3(4, r'$\sigma_8$', params_true, params_NN, errors_NN, minimum, maximum)
 
-    rmse_score2 = get_rmse_score(params_true2, averaged_params_NN)
-    sigma_bar2 = np.mean(averaged_errors_NN, axis=0)
-    plot_results2(0, r'$\Omega_{\rm m}: $' + f'RMSE = {rmse_score2[0]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar2[0]:.3f}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
-    plot_results2(1, r'$\Omega_{\rm b}: $' + f'RMSE = {rmse_score2[1]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar2[1]:.3f}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
-    plot_results2(2, r'$h: $' + f'RMSE = {rmse_score2[2]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar2[2]:.3f}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
-    plot_results2(3, r'$n_s: $' + f'RMSE = {rmse_score2[3]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar2[3]:.3f}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
-    plot_results2(4, r'$\sigma_8: $' + f'RMSE = {rmse_score2[4]:.3f}, ' + r'$\bar{\sigma} = ' + f'{sigma_bar2[4]:.3f}$', params_true2, averaged_params_NN, averaged_errors_NN, minimum, maximum)
 
     # COV distribution. COV is calculated for each simulation, and its histogram is shown.
-    plot_std_sim(0, r'$\Omega_{\rm m}$', std_sim_NN, averaged_params_NN)
-    plot_std_sim(1, r'$\Omega_{\rm b}$', std_sim_NN, averaged_params_NN)
-    plot_std_sim(2, r'$h$', std_sim_NN, averaged_params_NN)
-    plot_std_sim(3, r'$n_s$', std_sim_NN, averaged_params_NN)
-    plot_std_sim(4, r'$\sigma_8$', std_sim_NN, averaged_params_NN)
-
-    print(f'Median COV for Omega_m: {np.median(std_sim_NN[:, 0]/averaged_params_NN[:, 0])}')
-    print(f'Median COV for sigma_8: {np.median(std_sim_NN[:, 4]/averaged_params_NN[:, 4])}')
 
     df = pd.read_csv(test_results_filename)
     # test_sims = df['filename'].apply(lambda s:s.split('/')[1].split('_')[1]).unique()

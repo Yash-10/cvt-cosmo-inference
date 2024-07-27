@@ -17,19 +17,19 @@ import matplotlib.pyplot as plt
 import subprocess
 
 # CONSTANTS
-istart = 426
-NUM_SIMS = 434  # Can be any integer <= 2000.
+istart = 0
+NUM_SIMS = 2000  # Can be any integer <= 2000.
 # The below path is for the 2000 standard latin hypercube simulations.
 # Since it's 'standard', 512^3 particles are present, and since it's QUIJOTE, L_box = 1 Gpc h^-1.
 # NOTE: Change the below path (BASE_PATH) depending on your local path where the snapshots are stored.
 # Inside this folder, there must be folders named 0, 1, 2, ..., inside which there must be a folder named "snapdir_004", inside which there will be multiple HDF5 files.
 BASE_PATH = './snapshots' #/latin_hypercube'
-OUTPUT_DIR = './my_outputs/'
+OUTPUT_DIR = './my_outputs_128/'
 
 if not os.path.exists(OUTPUT_DIR):
     os.mkdir(OUTPUT_DIR)
 
-grid     = 256    #the density field will have grid^3 voxels
+grid     = 128    #the density field will have grid^3 voxels
 MAS      = 'CIC'  #Mass-assignment scheme:'NGP', 'CIC', 'TSC', 'PCS'
 verbose  = True   #whether to print information about the progress
 ptype    = [1]    #[1](CDM), [2](neutrinos) or [1,2](CDM+neutrinos)

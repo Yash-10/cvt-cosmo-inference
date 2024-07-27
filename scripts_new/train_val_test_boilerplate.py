@@ -182,6 +182,9 @@ def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu', minimum
     Returns:
         _type_: _description_
     """
+
+    n_feature = len(g)
+
     # get the number of maps in the test set
     num_maps = 0
     for x, y, _ in test_loader:
@@ -189,9 +192,9 @@ def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu', minimum
     print('\nNumber of maps in the test set: %d'%num_maps)
 
     # define the arrays containing the value of the parameters
-    params_true = np.zeros((num_maps,5), dtype=np.float32)
-    params_NN   = np.zeros((num_maps,5), dtype=np.float32)
-    errors_NN   = np.zeros((num_maps,5), dtype=np.float32)
+    params_true = np.zeros((num_maps,n_feature), dtype=np.float32)
+    params_NN   = np.zeros((num_maps,n_feature), dtype=np.float32)
+    errors_NN   = np.zeros((num_maps,n_feature), dtype=np.float32)
     filenames = np.empty((num_maps), dtype='object')
 
     # get test loss
@@ -204,10 +207,10 @@ def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu', minimum
             x     = x.to(device)  #send data to device
             y     = y.to(device)  #send data to device
             p     = model(x)      #prediction for mean and variance
-            y_NN  = p[:,:5]       #prediction for mean
-            e_NN  = p[:,5:]       #prediction for error
-            loss1 = torch.mean((y_NN[:,g] - y[:,g])**2,                     axis=0)
-            loss2 = torch.mean(((y_NN[:,g] - y[:,g])**2 - e_NN[:,g]**2)**2, axis=0)
+            y_NN  = p[:,:n_feature]       #prediction for mean
+            e_NN  = torch.abs(p[:,n_feature:])       #prediction for error
+            loss1 = torch.mean((y_NN - y)**2,                     axis=0)
+            loss2 = torch.mean(((y_NN - y)**2 - e_NN**2)**2, axis=0)
             test_loss1 += loss1*bs
             test_loss2 += loss2*bs
 
@@ -222,12 +225,21 @@ def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu', minimum
     test_loss = torch.mean(test_loss).item()
     print('Test loss = %.3e\n'%test_loss)
 
+    def show_result_for_each_parameter(value, name="Error"):
+        for count, i in enumerate(g):
+            if i == 0:
+                print('%s Omega_m = %.3f'%(name, value[count]))
+            elif i == 1:
+                print('%s Omega_b = %.3f'%(name, value[count]))
+            elif i == 2:
+                print('%s h   = %.3f'%(name, value[count]))
+            elif i == 3:
+                print('%s n_s  = %.3f'%(name, value[count]))
+            elif i == 4:
+                print('%s sigma_8   = %.3f'%(name, value[count]))
+    
     Norm_error = np.sqrt(np.mean((params_true - params_NN)**2, axis=0))
-    print('Normalized Error Omega_m = %.3f'%Norm_error[0])
-    print('Normalized Error Omega_b = %.3f'%Norm_error[1])
-    print('Normalized Error h   = %.3f'%Norm_error[2])
-    print('Normalized Error n_s  = %.3f'%Norm_error[3])
-    print('Normalized Error sigma_8   = %.3f'%Norm_error[4])
+    show_result_for_each_parameter(Norm_error, "Normalized Error")
 
     # de-normalize
     # IMPORTANT: These values must match the ones used during normalization in the preprocessing step before training.
@@ -236,26 +248,13 @@ def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu', minimum
     errors_NN   = errors_NN*(maximum - minimum)
 
     error = np.sqrt(np.mean((params_true - params_NN)**2, axis=0))
-    print('Error Omega_m = %.3f'%error[0])
-    print('Error Omega_b = %.3f'%error[1])
-    print('Error h   = %.3f'%error[2])
-    print('Error n_s  = %.3f'%error[3])
-    print('Error sigma_8   = %.3f'%error[4])
-
+    show_result_for_each_parameter(error, "Error")
+ 
     mean_error = np.absolute(np.mean(errors_NN, axis=0))
-    print('Bayesian error Omega_m = %.3f'%mean_error[0])
-    print('Bayesian error Omega_b = %.3f'%mean_error[1])
-    print('Bayesian error h   = %.3f'%mean_error[2])
-    print('Bayesian error n_s  = %.3f'%mean_error[3])
-    print('Bayesian error sigma_8   = %.3f'%mean_error[4])
+    show_result_for_each_parameter(mean_error, "Bayesian Error")
 
     rel_error = np.sqrt(np.mean((params_true - params_NN)**2/params_true**2, axis=0))
-    print('Relative error Omega_m = %.3f'%rel_error[0])
-    print('Relative error Omega_b = %.3f'%rel_error[1])
-    print('Relative error h   = %.3f'%rel_error[2])
-    print('Relative error n_s  = %.3f'%rel_error[3])
-    print('Relative error sigma_8   = %.3f'%rel_error[4])
-
+    show_result_for_each_parameter(rel_error, "Relative Error")
 
     # Save R2 and RMSE scores of each parameter
     r2_score = get_r2_score(params_true, params_NN)
