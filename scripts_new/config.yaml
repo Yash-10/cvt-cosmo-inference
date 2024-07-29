@@ -1,0 +1,12 @@
+# config.yaml
+
+params: 
+ - 0
+ - 4
+
+loss_type: "mse"
+
+model_name: "SimpleViT"
+
+project_name: "Cosmo-parameter-inference-mse-SimpleViT"
+
