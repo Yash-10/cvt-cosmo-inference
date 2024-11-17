@@ -3,7 +3,7 @@ Download the snapshots to the supercomputer using Globus. Instructions are https
 
 We need to access the San Diego cluster since it is the one containing the standard Latin hypercube snapshots. It is located here: https://app.globus.org/file-manager?origin_id=f4863854-3819-11eb-b171-0ee0d5d9299f&origin_path=%2F. In this link, we must go to the path "Snapshots/latin_hypercube". Inside this path, you will see folders from 0-1999. In each of these folders, we only need the snapdir_004 folder (corresponding to redshift = 0) and the Cosmo_params.dat (containing the cosmological parameters) file.
 
-(OPTIONAL: The values of cosmological parameters are also present here: https://github.com/franciscovillaescusa/Quijote-simulations/blob/master/latin_hypercube/latin_hypercube_params.txt - first row corresponds to simulation 0, second corresponds to simulation 1, etc - so one can download that single file instead of downloading Cosmo_params.dat for each simulation. If you opt for this, the code needs to be changed.)
+(OPTIONAL: The values of cosmological parameters are also present here: https://github.com/franciscovillaescusa/Quijote-simulations/blob/master/latin_hypercube/latin_hypercube_params.txt - first row corresponds to simulation 0, second corresponds to simulation 1, etc - so one can download that single file instead of downloading Cosmo_params.dat for each simulation. The code might need to be changed if this is opted.)
 
 As a rough estimate, I found that each snapshot might require ~3-4 GB, so in total, for 2000 snapshots, it will require 6-8 TB (it's possible that the calculation is wrong). If this will occupy too much disk space, you can download a subset of the simulations (e.g., the first 1000).
 
