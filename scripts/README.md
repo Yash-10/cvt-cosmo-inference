@@ -5,7 +5,7 @@ We need to access the San Diego cluster since it is the one containing the stand
 
 (OPTIONAL: The values of cosmological parameters are also present here: https://github.com/franciscovillaescusa/Quijote-simulations/blob/master/latin_hypercube/latin_hypercube_params.txt - first row corresponds to simulation 0, second corresponds to simulation 1, etc - so one can download that single file instead of downloading Cosmo_params.dat for each simulation. The code might need to be changed if this is opted.)
 
-As a rough estimate, I found that each snapshot might require ~3-4 GB, so in total, for 2000 snapshots, it will require 6-8 TB (it's possible that the calculation is wrong). If this will occupy too much disk space, you can download a subset of the simulations (e.g., the first 1000).
+As a rough estimate, each snapshot requires ~3-4 GB, so in total, for 2000 snapshots, it will require 6-8 TB. If this will occupy too much disk space, you can download a subset of the simulations (e.g., the first 1000).
 
 ### Step 2: 
 Install required packages
