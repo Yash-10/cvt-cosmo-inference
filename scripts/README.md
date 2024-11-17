@@ -35,14 +35,14 @@ python create_data.py --num_sims 2000 --train_frac 0.8 --test_frac 0.1 --seed 42
 This will create three folders named `train`, `val`, and `test` in the current directory.
 
 ### Step 5: 
-Train the ViT
+Train the ViT/CNN/CvT (see scripts inside `model/` for code to define each model)
 
 Run `python main_train.py`. All variables including access to the device for training the model (CPU or GPU) are hardcoded in the script itself.
 
 ### tep 6: 
-Test the ViT
+Test the ViT/CNN/CvT
 
-Run `python main_test.py`. This will output the final results in the form of a CSV file and PNG images. Could you share the outputs this script generates?
+Run `python main_test.py`. This will output the final results in the form of a CSV file and PNG images.
 
 
 ## Code for transfer learning:
