@@ -39,7 +39,7 @@ Train the ViT/CNN/CvT (see scripts inside `model/` for code to define each model
 
 Run `python main_train.py`. All variables including access to the device for training the model (CPU or GPU) are hardcoded in the script itself.
 
-### tep 6: 
+### Step 6: 
 Test the ViT/CNN/CvT
 
 Run `python main_test.py`. This will output the final results in the form of a CSV file and PNG images.
