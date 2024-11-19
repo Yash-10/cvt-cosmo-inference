@@ -1,0 +1,17 @@
+h5py
+hdf5plugin
+Pylians
+torch
+torchvision
+pytorch-lightning
+vit-pytorch
+torchsummary
+torch-intermediate-layer-getter
+matplotlib
+pandas
+scikit-learn
+wandb
+absl-py
+tensorflow
+ipython
+seaborn
