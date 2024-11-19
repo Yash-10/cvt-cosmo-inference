@@ -141,9 +141,8 @@ class ViT(pl.LightningModule):
 
         if LOSS_TYPE == "mse":
             loss1 = torch.mean((y_NN - y)**2, axis=0)
-            loss2 = torch.mean(torch.abs((y_NN - y)**2 - e_NN**2), axis=0)
+            loss2 = torch.mean(((y_NN - y)**2 - e_NN**2)**2, axis=0)
             loss  = torch.mean(torch.log(loss1) + torch.log(loss2))
-            #loss = torch.mean(loss1 + loss2 + e_NN**2)
         elif LOSS_TYPE == "nll":
             loss = torch.mean(0.5 * torch.log(2 * np.pi * e_NN**2) + (y - y_NN)**2 / (2 * e_NN**2))
         
