@@ -4,12 +4,13 @@
 # Description: Main script to run the testing. The trained model from
 #              `main_train.py` is loaded and used for testing.
 # ***************************************************************************
-
+import sys
+import time
 import numpy as np
 
 from train_val_test_boilerplate import test
-from model.vit import ViT
-from model.cnn import CNN
+from model.vit import ViT, ViT_FineTune, ViT_FineTune_CvT
+from model.cnn import CNN, CNN_FineTune
 
 import torch
 from torch.utils.data import DataLoader
@@ -32,30 +33,11 @@ FILTERING = False
 
 ## halo from scratch num_sim = 100 
 
-prefix = 'dens128'
-base_dir = f'./my_outputs_128'
-pretrained_dir = f'./saved_models_dens128/lightning_logs_csv/version_0'
-pretrained_filename = f'{pretrained_dir}/checkpoints/epoch=27-step=28000.ckpt'
-
 prefix = ''
 base_dir = f'./my_outputs'
-pretrained_dir = f'./saved_models/lightning_logs_csv/version_0'
-pretrained_filename = f'{pretrained_dir}/checkpoints/epoch=25-step=26000.ckpt'
 
-prefix = ''
-base_dir = f'./my_outputs'
-pretrained_dir = f'./saved_models/lightning_logs_csv/version_5'
-pretrained_filename = f'{pretrained_dir}/checkpoints/epoch=23-step=2400.ckpt'
-
-prefix = ''
-base_dir = f'./my_outputs'
-pretrained_dir = f'./saved_models/lightning_logs_csv/version_4'
-pretrained_filename = f'{pretrained_dir}/checkpoints/epoch=28-step=29000.ckpt'
-
-prefix = 'halos'
-base_dir = f'./my_outputs_halo'
-pretrained_dir = f'./saved_models_halos/lightning_logs_csv/version_0'
-pretrained_filename = f'{pretrained_dir}/checkpoints/epoch=20-step=2100.ckpt'
+pretrained_dir = './saved_models_halo/lightning_logs_csv/version_28'
+pretrained_filename = f'{pretrained_dir}/checkpoints/epoch=21-step=2200.ckpt'
 
 df = pd.read_csv("./pretrained_filename.txt", delimiter=' ', header=None)
 if pretrained_filename in df[0].values:
@@ -107,22 +89,39 @@ model_kwargs = extract_model_params(filename, 'model_kwargs')
 
 print(model_kwargs)
 if 'ViT' in model_name or model_name == 'CvT':
-    model = ViT.load_from_checkpoint(pretrained_filename, model_kwargs=model_kwargs, minimum=MIN_VALS, maximum=MAX_VALS)
+    if "transfer" in name:
+        if "CvT" in name:
+            model = ViT_FineTune_CvT.load_from_checkpoint(pretrained_filename, model_kwargs=model_kwargs, minimum=MIN_VALS, maximum=MAX_VALS)
+        else:
+            model = ViT_FineTune.load_from_checkpoint(pretrained_filename, model_kwargs=model_kwargs, minimum=MIN_VALS, maximum=MAX_VALS)
+    else:
+        model = ViT.load_from_checkpoint(pretrained_filename, model_kwargs=model_kwargs, minimum=MIN_VALS, maximum=MAX_VALS)
 elif model_name == 'CNN':
-    model = CNN.load_from_checkpoint(pretrained_filename, model_kwargs=model_kwargs, minimum=MIN_VALS, maximum=MAX_VALS)
+    if "transfer" in name:
+        model = CNN_FineTune.load_from_checkpoint(pretrained_filename, model_kwargs=model_kwargs, minimum=MIN_VALS, maximum=MAX_VALS)
+    else:
+        model = CNN.load_from_checkpoint(pretrained_filename, model_kwargs=model_kwargs, minimum=MIN_VALS, maximum=MAX_VALS)
 else:
     raise ValueError("Model not supported")
 
+time0 = time.time()
 params_true, params_NN, errors_NN, filenames = test(model, test_loader, g=g, h=h, device=device, minimum=MIN_VALS, maximum=MAX_VALS)
+time_taken_test = time.time() - time0
+print(f'Time taken for testing: {time_taken_test:.2f} seconds')
+with open("time_for_test.txt", "a") as f:
+    f.write(f'{name} {time_taken_test:.2f}\n')
 
 num_sims = 2000
 num_maps_per_projection_direction = 10 
 
+
 wandb.init(project=project_name, name=name, mode="online")
 from evaluation_analysis import post_test_analysis
+full_name = name.replace("/", "_")
 post_test_analysis(
     params_true, params_NN, errors_NN, filenames,
     params, num_sims, MEAN, STD, MEAN_DENSITIES, MIN_VALS, MAX_VALS,
-    num_maps_per_projection_direction, test_results_filename='test_results.csv',
+    num_maps_per_projection_direction, test_results_filename=f'test_results_{full_name}.csv',
     smallest_sim_number=0
 )
+

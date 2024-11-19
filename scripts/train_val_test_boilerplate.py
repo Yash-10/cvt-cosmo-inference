@@ -24,11 +24,11 @@ def init_valid_loss(model, val_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu
             e_NN = p[:,h]                    #posterior std
             loss1 = torch.mean((y_NN - y)**2,                axis=0)
             loss2 = torch.mean(((y_NN - y)**2 - e_NN**2)**2, axis=0)
-            loss  = torch.mean(torch.log(loss1) + torch.log(loss2))
             valid_loss1 += loss1*bs
             valid_loss2 += loss2*bs
             points += bs
     min_valid_loss = torch.log(valid_loss1/points) + torch.log(valid_loss2/points)
+    #min_valid_loss = valid_loss1/points + valid_loss2/points
     min_valid_loss = torch.mean(min_valid_loss).item()
     print('Initial valid loss = %.3e'%min_valid_loss)
     return min_valid_loss
@@ -88,6 +88,7 @@ def train(
                 loss1 = torch.mean((y_NN - y)**2,                axis=0)
                 loss2 = torch.mean(((y_NN - y)**2 - e_NN**2)**2, axis=0)
                 loss  = torch.mean(torch.log(loss1) + torch.log(loss2))
+                #loss = torch.mean(loss1 + loss2)
                 valid_loss1 += loss1*bs
                 valid_loss2 += loss2*bs
                 points     += bs
@@ -208,7 +209,7 @@ def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu', minimum
             y     = y.to(device)  #send data to device
             p     = model(x)      #prediction for mean and variance
             y_NN  = p[:,:n_feature]       #prediction for mean
-            e_NN  = torch.abs(p[:,n_feature:])       #prediction for error
+            e_NN  = p[:,n_feature:]        #prediction for error
             loss1 = torch.mean((y_NN - y)**2,                     axis=0)
             loss2 = torch.mean(((y_NN - y)**2 - e_NN**2)**2, axis=0)
             test_loss1 += loss1*bs
@@ -250,7 +251,8 @@ def test(model, test_loader, g=[0,1,2,3,4], h=[5,6,7,8,9], device='cpu', minimum
     error = np.sqrt(np.mean((params_true - params_NN)**2, axis=0))
     show_result_for_each_parameter(error, "Error")
  
-    mean_error = np.absolute(np.mean(errors_NN, axis=0))
+    #mean_error = np.absolute(np.mean(errors_NN, axis=0))
+    mean_error = np.sqrt(np.sum(errors_NN**2, axis=0)) / num_maps
     show_result_for_each_parameter(mean_error, "Bayesian Error")
 
     rel_error = np.sqrt(np.mean((params_true - params_NN)**2/params_true**2, axis=0))

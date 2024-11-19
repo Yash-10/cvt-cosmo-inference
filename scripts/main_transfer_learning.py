@@ -43,7 +43,7 @@ from utils import extract_model_params
 from model.vit import ViT_FineTune, ViT_FineTune_CvT
 from model.cnn import CNN_FineTune
 
-DR_NEW = None
+DR_NEW = 0
 FREEZE_LAYERS = False  # If True, all layers except Linear in to_patch_embedding are frozen
 
 ### dens -> halo
@@ -51,31 +51,13 @@ base_dir = './my_outputs_halo'
 prefix = 'halos'
 CHECKPOINT_PATH = "./saved_models_halo"
 
-# vit mse
-pretrained_dir = "./saved_models/lightning_logs_csv/version_25"
-pretrained_filename = f"{pretrained_dir}/checkpoints/epoch=27-step=28000.ckpt"
+# CvT mse
 
-# vit nll
-#pretrained_dir = "./saved_models/lightning_logs_csv/version_24"
-#pretrained_filename = f"{pretrained_dir}/checkpoints/epoch=1-step=2000.ckpt"
+### Cosmo-parameter-inference-mse-CNN/ViT_train__num_sims-2000_batchsize-16_lr-5e-06_epochs-30_wd-1e-05_dr-0
+pretrained_dir = "./saved_models/lightning_logs_csv/version_42"
+pretrained_filename = f"{pretrained_dir}/checkpoints/epoch=29-step=30000.ckpt"
 
 name_opt = ''
-
-### 128 -> 256
-#base_dir = './my_outputs'
-#prefix = ''
-#CHECKPOINT_PATH = "./saved_models"
-#pretrained_dir = f'./saved_models_dens128/lightning_logs_csv/version_0'
-#pretrained_filename = f'{pretrained_dir}/checkpoints/epoch=27-step=28000.ckpt'
-#name_opt = '_from_dens128'
-
-### cropped 128 -> 256
-#base_dir = './my_outputs'
-#prefix = ''
-#CHECKPOINT_PATH = "./saved_models"
-#pretrained_dir = f'./saved_models/lightning_logs_csv/version_9'
-#pretrained_filename = f'{pretrained_dir}/checkpoints/epoch=25-step=26000.ckpt'
-#name_opt = '_from_cropped' 
 
 os.makedirs(CHECKPOINT_PATH, exist_ok=True)
 
@@ -119,6 +101,7 @@ lr = extract_model_params(filename, 'lr')
 beta1 = extract_model_params(filename, 'beta1')
 beta2 = extract_model_params(filename, 'beta2')
 wd = extract_model_params(filename, 'wd')
+
 if DR_NEW is not None:
     model_kwargs['dr'] = DR_NEW
     name_opt += f'_dr{DR_NEW}'
@@ -164,6 +147,7 @@ WANDB_RUN_NAME = f'ViT_transfer_{prefix}_num_sims-{num_sims}_batchsize-{batch_si
 wandb_logger = WandbLogger(name=WANDB_RUN_NAME, project=WANDB_PROJECT_NAME)
 wandb_logger.experiment.config.update({"batch_size": batch_size, "epochs": epochs})
 
+print("WANDB_PROJECT_NAME:", WANDB_PROJECT_NAME)
 print("WANDB_RUN_NAME:", WANDB_RUN_NAME)
 
 # Define finetuning function
@@ -189,7 +173,7 @@ def finetune_model(pretrained_filename, model_name, **kwargs):
         
         if model_name == "CvT":
             model = ViT_FineTune_CvT(pretrained_filename, **kwargs) 
-        elif model_name == "ViT_simple":
+        elif model_name == "SimpleViT":
             model = ViT_FineTune(pretrained_filename, **kwargs)
         elif model_name == "CNN":
             model = CNN_FineTune(pretrained_filename, **kwargs) 
@@ -204,7 +188,7 @@ def finetune_model(pretrained_filename, model_name, **kwargs):
 
     if model_name == "CvT":
         model = ViT_FineTune_CvT.load_from_checkpoint(trainer.checkpoint_callback.best_model_path) # Load best checkpoint after training
-    elif model_name == "ViT_simple":
+    elif model_name == "SimpleViT":
         model = ViT_FineTune.load_from_checkpoint(trainer.checkpoint_callback.best_model_path) # Load best checkpoint after training
     elif model_name == "CNN":
         model = CNN_FineTune.load_from_checkpoint(trainer.checkpoint_callback.best_model_path)
@@ -229,8 +213,6 @@ print("ViT_FineTune results", results)
 print(f'Fine-tuned file name: {FINETUNED_FILENAME}')
 print(f'Time taken: {time_taken:.2f} seconds')
 
-with open("pretrained_filename.txt", "a") as f:
-    f.write(f'{FINETUNED_FILENAME} {WANDB_PROJECT_NAME}/{WANDB_RUN_NAME} {time_taken:.2f}\n')
 
 #################################################
 # Now test the finetuned model.
@@ -239,10 +221,13 @@ with open("pretrained_filename.txt", "a") as f:
 model.to(device)
 
 from train_val_test_boilerplate import test
+test_results_filename = f'test_results_transfer_learning_{model_name}_{prefix}_num_sims{num_sims}_epoch{epochs}_freeze{FREEZE_LAYERS}.csv'
 
 # Below values calculated during data preparation. See above.
+time0 = time.time()
 params_true, params_NN, errors_NN, filenames = test(model, test_loader, g=g, h=h, device=device, minimum=MIN_VALS, maximum=MAX_VALS)
-
+time_taken_test = time.time() - time0
+print(f'Time taken for testing: {time_taken_test:.2f} seconds')
 
 import wandb
 wandb.init(project=WANDB_PROJECT_NAME, name=WANDB_RUN_NAME, mode="online")
@@ -253,6 +238,10 @@ post_test_analysis(
     params_true, params_NN, errors_NN, filenames,
     params, num_sims, MEAN, STD, MEAN_DENSITIES, MIN_VALS, MAX_VALS,
     num_maps_per_projection_direction,
-    test_results_filename=f'test_results_transfer_learning_ViT_epoch{epochs}_freeze{FREEZE_LAYERS}.csv',
+    test_results_filename=test_results_filename,
     smallest_sim_number=0 
 )
+
+with open("pretrained_filename.txt", "a") as f:
+    f.write(f'{FINETUNED_FILENAME} {WANDB_PROJECT_NAME}/{WANDB_RUN_NAME} {time_taken:.2f} {time_taken_test:.2f}\n')
+

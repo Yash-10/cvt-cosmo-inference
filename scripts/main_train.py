@@ -51,33 +51,14 @@ base_dir = './my_outputs'
 prefix = ''
 image_size = 256
 num_sims = 2000
-epochs = 30
 
-base_dir = './my_outputs_halo'
-prefix = 'halos'
-image_size = 256
-num_sims = 2000
-epochs = 30
-
-## 128 -> 256
-#base_dir = './my_outputs_128'
-#prefix = 'dens128'
-#image_size = 128
-#num_sims = 2000
-#epochs = 30
-
-#base_dir = './my_outputs'
-#prefix = ''
+#base_dir = './my_outputs_halo'
+#prefix = 'halos'
 #image_size = 256
-#num_sims = 100
-#epochs = 60
+#num_sims = 200
 
-#base_dir = './my_outputs'
-#prefix = ''
-#image_size = 128
-#num_sims = 2000
-#epochs = 30
-#CROP = True
+
+epochs = 30
 
 num_sims_train = int(0.8 * num_sims)
 num_sims_val = int(0.1 * num_sims)
@@ -110,7 +91,7 @@ beta2 = 0.999
 batch_size = 16
 lr         = 5e-6
 wd         = 1e-5  # value of weight decay
-dr         = 0.0 # 0.2
+dr         = 0
 channels        = 1                #we only consider here 1 field
 
 num_maps_per_projection_direction = 10
@@ -127,33 +108,35 @@ h = [5+i for i in g]
 project_name = config['project_name']
 model_name = config['model_name']
 
-patch_size = 8
-model_kwargs = {
-    'image_size': image_size,
-    'embed_dim': 1024,  # For the MLP.
-    'hidden_dim': 64, # this is the projection_dim in terms of the variables defined in https://keras.io/examples/vision/image_classification_with_vision_transformer/.
-    'num_heads': 4,
-    'num_layers': 8,
-    'patch_size': patch_size,
-    'num_channels': channels,
-    'num_patches': (image_size // patch_size) ** 2,
-    'num_classes': len(g) + len(h),
-    'dropout': dr
-}
-
-model_kwargs = {
-    'num_classes': len(g) + len(h),
-    'dr': dr
-}
-
-"""
-model_kwargs = {
-    'image_size': image_size,
-    'hidden': 8,
-    'dr': dr,
-    'channels': channels
-}
-"""
+if model_name == "SimpleViT":
+    patch_size = 8
+    model_kwargs = {
+        'image_size': image_size,
+        'embed_dim': 1024,  # For the MLP.
+        'hidden_dim': 64, # this is the projection_dim in terms of the variables defined in https://keras.io/examples/vision/image_classification_with_vision_transformer/.
+        'num_heads': 4,
+        'num_layers': 8,
+        'patch_size': patch_size,
+        'num_channels': channels,
+        'num_patches': (image_size // patch_size) ** 2,
+        'num_classes': len(g) + len(h),
+        'dropout': dr
+    }
+elif model_name == "CvT":
+    model_kwargs = {
+        'num_classes': len(g) + len(h),
+        'dr': dr
+    }
+elif model_name == "CNN":
+    model_kwargs = {
+        'num_classes': len(g) + len(h),
+        'image_size': image_size,
+        'hidden': 8,
+        'dr': dr,
+        'channels': channels
+    }
+else:
+    raise ValueError(f"Unknown model name: {model_name}")
 
 
 print("model_name:", model_name)
@@ -209,7 +192,7 @@ val_loader = DataLoader(dataset=val_dataset, batch_size=batch_size, shuffle=Fals
 from pytorch_lightning.loggers import WandbLogger
 logger_csv = pl.loggers.CSVLogger(CHECKPOINT_PATH, name="lightning_logs_csv")
 WANDB_PROJECT_NAME = project_name
-WANDB_RUN_NAME = f'ViT_train_{prefix}_num_sims-{num_sims}_batchsize-{batch_size}_lr-{lr}_epochs-{epochs}_wd-{wd}'
+WANDB_RUN_NAME = f'ViT_train_{prefix}_num_sims-{num_sims}_batchsize-{batch_size}_lr-{lr}_epochs-{epochs}_wd-{wd}_dr-{dr}'
 if FILTERING:
     WANDB_RUN_NAME += '_filtered'
 if CROP:
@@ -217,6 +200,7 @@ if CROP:
 wandb_logger = WandbLogger(name=WANDB_RUN_NAME, project=WANDB_PROJECT_NAME)
 wandb_logger.experiment.config.update({"batch_size": batch_size, "epochs": epochs})
 
+print("WANDB_PROJECT_NAME:", WANDB_PROJECT_NAME)
 print("WANDB_RUN_NAME:", WANDB_RUN_NAME)
 
 def train_model(model_name, **kwargs):
@@ -276,10 +260,8 @@ print("ViT results", results)
 print(f'Pretrained file name: {PRETRAINED_FILENAME}')
 print(f'Time taken: {time_taken:.2f} seconds')
 
-with open("pretrained_filename.txt", "a") as f:
-    f.write(f'{PRETRAINED_FILENAME} {WANDB_PROJECT_NAME}/{WANDB_RUN_NAME} {time_taken:.2f}\n')
-
 TEST_NOW = True
+time_taken_test = 0
 if TEST_NOW:
     model.to(device)
 
@@ -291,8 +273,11 @@ if TEST_NOW:
     test_dataset = CustomImageDataset(f'{base_dir}/test', normalized_cosmo_params_path=f'{base_dir}/test/test_normalized_params.csv', transform=val_transform)
     test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False, num_workers=3)
 
+    time0 = time.time()
     params_true, params_NN, errors_NN, filenames = test(model, test_loader, g=g, h=h, device=device, minimum=MIN_VALS, maximum=MAX_VALS)
-    
+    time_taken_test = time.time() - time0
+    print(f'Time taken for testing: {time_taken_test:.2f} seconds')
+
     import wandb
     wandb.init(project=WANDB_PROJECT_NAME, name=WANDB_RUN_NAME, mode="online")
 
@@ -305,3 +290,6 @@ if TEST_NOW:
         num_maps_per_projection_direction, test_results_filename=test_results_filename,
         smallest_sim_number=0
     )
+
+with open("pretrained_filename.txt", "a") as f:
+    f.write(f'{PRETRAINED_FILENAME} {WANDB_PROJECT_NAME}/{WANDB_RUN_NAME} {time_taken:.2f} {time_taken_test:.2f}\n')
