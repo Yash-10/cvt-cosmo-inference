@@ -4,6 +4,7 @@ import gzip
 from torch.utils.data.dataset import Dataset
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 # PyTorch Lightning
 import pytorch_lightning as pl
@@ -109,7 +110,10 @@ class ViT(pl.LightningModule):
 #         return self.model(x)
 
         out = self.model(x)
-        
+        half_size = out.size(1) // 2
+
+        out = torch.cat((out[:, :half_size], F.softplus(out[:, half_size:])), dim=1)  # enforce the errors to be positive
+
         return out
 
     def configure_optimizers(self):
@@ -133,14 +137,15 @@ class ViT(pl.LightningModule):
 
         n_feature = int( out.size(1) * 0.5 )
         y_NN = out[:,:n_feature]
-        sigma_NN = torch.square(out[:,n_feature:]) # enforce the errors to be positive
+        e_NN = out[:,n_feature:]
 
         if LOSS_TYPE == "mse":
             loss1 = torch.mean((y_NN - y)**2, axis=0)
-            loss2 = torch.mean(((y_NN - y)**2 - sigma_NN)**2, axis=0)
+            loss2 = torch.mean(torch.abs((y_NN - y)**2 - e_NN**2), axis=0)
             loss  = torch.mean(torch.log(loss1) + torch.log(loss2))
+            #loss = torch.mean(loss1 + loss2 + e_NN**2)
         elif LOSS_TYPE == "nll":
-            loss = torch.mean(0.5 * torch.log(2 * np.pi * sigma_NN) + (y - y_NN)**2 / (2 * sigma_NN))
+            loss = torch.mean(0.5 * torch.log(2 * np.pi * e_NN**2) + (y - y_NN)**2 / (2 * e_NN**2))
         
         # NOTE: See logging for more information: https://lightning.ai/docs/pytorch/2.1.3/extensions/logging.html
         # Not sure if the below logic is even needed, but should be fine.
@@ -160,11 +165,11 @@ class ViT(pl.LightningModule):
             # `minimum` and `maximum` must be defined globally.
             y = y.cpu().detach().numpy() * (self.maximum - self.minimum) + self.minimum
             y_NN   = y_NN.cpu().detach().numpy() * (self.maximum - self.minimum) + self.minimum
-            sigma_NN   = sigma_NN.cpu().detach().numpy() * (self.maximum - self.minimum)
+            e_NN   = e_NN.cpu().detach().numpy() * (self.maximum - self.minimum)
 
             # Also log RMSE and sigma_bar for all parameters.
             rmse = get_rmse_score(y, y_NN)
-            sigma_bar = np.mean(sigma_NN, axis=0)
+            sigma_bar = np.mean(e_NN, axis=0)
             # Only log at the end of epoch instead of each step.
             # Logging is only done for Omega_m and sigma_8 since only these are interesting for DM density/DM halo fields.
             # But more can easily be added here if and when needed.

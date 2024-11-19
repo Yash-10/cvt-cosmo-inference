@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 # PyTorch Lightning
 import pytorch_lightning as pl
@@ -16,14 +17,8 @@ import yaml
 with open("config.yaml", "r") as file:
     config = yaml.safe_load(file)
 
-params = config['params']
-#params          = [0,1,2,3,4]    #Omega_m, Omega_b, h, n_s, sigma_8. The code will be trained to predict all these parameters.
-g               = params           #g will contain the mean of the posterior
-h               = [5+i for i in g] #h will contain the variance of the posterior
-
-
 class model_o3_err(nn.Module): # TODO: This is not used in the notebooks currently.
-    def __init__(self, image_size, hidden, dr, channels):
+    def __init__(self, num_classes, image_size, hidden, dr, channels):
         super(model_o3_err, self).__init__()
 
         img_size = image_size
@@ -105,7 +100,7 @@ class model_o3_err(nn.Module): # TODO: This is not used in the notebooks current
         #        nn.Linear(16*hidden, 10)
         #)
         self.mlp_head = nn.Sequential(
-                nn.Linear(32*hidden*img_size*img_size, 10),
+                nn.Linear(32*hidden*img_size*img_size, num_classes),
                 # self.LeakyReLU,
                 # self.dropout,
                 # nn.Linear(16*hidden, 10)
@@ -148,10 +143,11 @@ class model_o3_err(nn.Module): # TODO: This is not used in the notebooks current
 #         x = self.FC2(x)
 
         # enforce the errors to be positive
-        y = torch.clone(x)
-        y[:,5:10] = torch.square(x[:,5:10])
+        half_size = x.size(1) // 2
 
-        return y
+        out = torch.cat((x[:, :half_size], F.softplus(x[:, half_size:])), dim=1)
+        
+        return out
 
 
 class CNN(pl.LightningModule):
@@ -187,14 +183,14 @@ class CNN(pl.LightningModule):
         x, y, _ = batch
         batch_size = x.shape[0]
 
-        p = self.model(x)
+        out = self.model(x)
         
-        y = y[:,g]                #true values
-        y_NN = p[:,g]             #posterior mean
-        e_NN = p[:,h]             #posterior std
+        n_feature = int( out.size(1) * 0.5 )
+        y_NN = out[:,:n_feature]             #posterior mean
+        sigma_NN = out[:,n_feature:]
 
         loss1 = torch.mean((y_NN - y)**2,                axis=0)
-        loss2 = torch.mean(((y_NN - y)**2 - e_NN**2)**2, axis=0)
+        loss2 = torch.mean(((y_NN - y)**2 - sigma_NN**2)**2, axis=0)
         loss  = torch.mean(torch.log(loss1) + torch.log(loss2))
         # NOTE: See logging for more information: https://lightning.ai/docs/pytorch/2.1.3/extensions/logging.html
         # Not sure if the below logic is even needed, but should be fine.
@@ -214,11 +210,11 @@ class CNN(pl.LightningModule):
             # `minimum` and `maximum` must be defined globally.
             y = y.cpu().detach().numpy() * (self.maximum - self.minimum) + self.minimum
             y_NN   = y_NN.cpu().detach().numpy() * (self.maximum - self.minimum) + self.minimum
-            e_NN   = e_NN.cpu().detach().numpy() * (self.maximum - self.minimum)
+            sigma_NN   = sigma_NN.cpu().detach().numpy() * (self.maximum - self.minimum)
 
             # Also log RMSE and sigma_bar for all parameters.
             rmse = get_rmse_score(y, y_NN)
-            sigma_bar = np.mean(e_NN, axis=0)
+            sigma_bar = np.mean(sigma_NN, axis=0)
             # Only log at the end of epoch instead of each step.
             # Logging is only done for Omega_m and sigma_8 since only these are interesting for DM density/DM halo fields.
             # But more can easily be added here if and when needed.
@@ -245,7 +241,7 @@ class CNN(pl.LightningModule):
 
 
 class CNN_FineTune(CNN):
-    def __init__(self, PRETRAINED_FILENAME, model_kwargs, lr, wd, beta1, beta2, minimum, maximum):
+    def __init__(self, PRETRAINED_FILENAME, model_kwargs, lr, wd, beta1, beta2, minimum, maximum, freeze_layers=False):
         super(CNN_FineTune, self).__init__(model_kwargs=model_kwargs, lr=lr, wd=wd, beta1=beta1, 
         beta2=beta2, minimum=minimum, maximum=maximum)
         
@@ -253,10 +249,12 @@ class CNN_FineTune(CNN):
 
         self.model = CNN.load_from_checkpoint(PRETRAINED_FILENAME, model_kwargs, lr=lr, wd=wd, beta1=beta1, beta2=beta2, minimum=minimum, maximum=maximum)
 
+        params = config['params']
+
         # Re-initialize the MLP head.
         # See, for example, https://pyimagesearch.com/2019/06/03/fine-tuning-with-keras-and-deep-learning/
         self.model.model.mlp_head = nn.Sequential(
-            nn.Linear(32*model_kwargs["hidden"], 10),
+            nn.Linear(32*model_kwargs["hidden"]*7*7, len(params)*2),
 #             nn.LeakyReLU(0.2),
 #             nn.Dropout(p=model_kwargs['dr']),
 #             nn.Linear(16*hidden, 10)
