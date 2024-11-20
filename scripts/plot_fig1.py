@@ -24,8 +24,8 @@ def read_hdf5(filename, dtype=np.float32, dataset_name='3D_density_field'):
 
     return density_field, cosmo_params
 
-density, params = read_hdf5('/home/oem/Downloads/kana_final_results/test_results/data_cube/sim1343_LH_z0_grid256_masCIC.h5')
-halo, params1 = read_hdf5('/home/oem/Downloads/kana_final_results/test_results/data_cube/halos_sim1343_LH_z0_grid256_masCIC.h5', dataset_name='3D_halo_distribution')
+density, params = read_hdf5('./sim1343_LH_z0_grid256_masCIC.h5')
+halo, params1 = read_hdf5('./halos_sim1343_LH_z0_grid256_masCIC.h5', dataset_name='3D_halo_distribution')
 
 density = density[:, 10, :]
 halo = halo[:, 10, :]
