@@ -19,7 +19,7 @@ Create density fields from the snapshots
 
 (a) `create_density_fields_from_snapshots.py` creates the density fields from 2000 snapshots. You need to run it as `python create_density_fields_from_snapshots.py`
 
-If you use a lesser number of simulations than 2000, please change the `NUM_SIMS` variable in the script accordingly. If you are changing `NUM_SIMS`, you must also change the variable `num_sims` in main_train.py (Step 4) and also the `num_sims` argument to `create_data.py` (see Step 3 below). In any case, could you please keep the same grid size (`grid=256`) since, for this experiment, we want a sufficiently larger grid size compared to 64^3? This script will create a tar zip file containing the density fields as output.
+If you use a lesser number of simulations than 2000, please change the `NUM_SIMS` variable in the script accordingly. If you are changing `NUM_SIMS`, you must also change the variable `num_sims` in main_train.py (Step 4) and also the `num_sims` argument to `create_data.py` (see Step 3 below). The grid size can be set by the variable `grid`. This script will create a tar zip file containing the density fields as output.
 
 (b) Untar the tar.gz file using tar -xvzf <tar-zip-file>, for example, which will create a folder named my_outputs in the current directory.
 
@@ -49,10 +49,10 @@ By default, the test will automatically be conducted at the end of the training.
 
 ### Steps: 1. 
 Download the Halo simulations. The code written is slightly inflexible in terms of what Halo simulations to use for transfer learning. 
-If you download from 0-1999, SAME_SIMS must be true since you used 0-1999 simulations for the DM density. If you decide to use halo simulations only from 1000-1999, please set SAME_SIMS=False inside main_transfer_learning.py
+If you download from 0-1999, `SAME_SIMS` must be true since you used 0-1999 simulations for the DM density. If you decide to use halo simulations only from 1000-1999, please set `SAME_SIMS=False` inside `main_transfer_learning.py`.
 
 ### Step 2:
-Run create_halo_fields_from_snapshots.py (attached).
+Run `create_halo_fields_from_snapshots.py`.
 
 ### Step 3: 
-Run main_transfer_learning.py (attached): this will run the transfer learning and testing together. Note: To run this successfully, you would need to change some paths, etc., inside the script.
+Run `main_transfer_learning.py`: this will run the transfer learning and testing together. Note: To run this successfully, you would need to change some paths, etc., inside the script.
