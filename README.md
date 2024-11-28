@@ -1,6 +1,6 @@
 # Convolutional Vision Transformer for Cosmology Parameter Inference
 
-This repository contains code accompanying our [paper](TODO-ADD-arXiv-link) accepted at the NeurIPS ML4PS 2024 workshop.
+This repository contains code accompanying our [paper](https://arxiv.org/abs/2411.14392) accepted at the NeurIPS ML4PS 2024 workshop.
 
 ![CvT-diagram-1](https://github.com/Yash-10/cvt-cosmo-inference/blob/main/figures/CvT_Diagram-1.png)
 ![CvT-diagram-2](https://github.com/Yash-10/cvt-cosmo-inference/blob/main/figures/CvT_Diagram-2.png)
